@@ -1,6 +1,6 @@
 <div align="center">
 
-# RedOps Mobile
+<img src="docs/images/redops_logo.png" alt="RedOps Mobile" width="280"/>
 
 ### The penetration testing platform that turns your phone into a weapon.
 
@@ -9,7 +9,7 @@
 [![Compose](https://img.shields.io/badge/Jetpack_Compose-Material3-4285F4?style=flat-square&logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose)
 [![Frida](https://img.shields.io/badge/Frida-Integrated-EF4444?style=flat-square)](https://frida.re)
 [![Claude](https://img.shields.io/badge/Claude_AI-Agent-D97706?style=flat-square)](https://anthropic.com)
-[![Lines](https://img.shields.io/badge/92%2C000%2B_Lines-Kotlin-A855F7?style=flat-square)](#architecture)
+[![Lines](https://img.shields.io/badge/91%2C000%2B_Lines-Kotlin-A855F7?style=flat-square)](#architecture)
 [![License](https://img.shields.io/badge/License-Proprietary-1F2937?style=flat-square)](#license)
 
 ---
@@ -86,6 +86,23 @@ Found a task affinity vulnerability? Generate a signed proof-of-concept APK in s
 - Signs it using the chroot's build tools
 - Installs and demonstrates the hijack
 
+### Web Pentesting (CDP)
+
+Bridge native and web security testing through Chrome DevTools Protocol integration.
+
+- **Chrome CDP** — connect to Chrome on the device for full WebView and browser testing
+- **Two Modes** — `browse` for ad-hoc recon (disposable scratch), `start` for persistent pentest sessions with organized output
+- **Full Audit Suite** — crawl pages, audit security headers/CSP, inspect cookies, extract JWTs, analyze forms/CSRF, discover endpoints
+- **JS Execution** — evaluate arbitrary JavaScript inside WebView/browser contexts
+- **Screenshots** — labeled, timestamped captures organized per target
+
+### RCE & Native Scanning
+
+Automated vulnerability scanning at both DEX and native layers.
+
+- **RCE Scan** — discovers DEX-layer RCE vectors: `Runtime.exec`, `DexClassLoader`, WebView JavaScript bridges, deserialization sinks, intent redirect chains
+- **Native Scan** — analyzes native `.so` libraries for unsafe functions, symbol exposure, and exploitable patterns
+
 ### PQ Manager
 
 GUI control panel for the `pq` Frida toolkit.
@@ -152,7 +169,7 @@ The **Android host** runs the APK — all UI, navigation, database persistence, 
 
 ## The pq Tool
 
-`pq` is a custom-built Python CLI (3,500+ lines) that manages all Frida operations. It replaces direct Frida usage with a higher-level interface that handles server lifecycle, stealth, spawn gating, multi-script merging, traffic capture, and interactive hook control. Frida server is auto-started in stealth mode before any command that needs it.
+`pq` is a custom-built Python CLI backed by 26 library modules (~43,000 lines of Python/JS) that manages all Frida operations. It replaces direct Frida usage with a higher-level interface that handles server lifecycle, stealth, spawn gating, multi-script merging, traffic capture, and interactive hook control. Frida server is auto-started in stealth mode before any command that needs it.
 
 ```bash
 # Discovery
@@ -177,6 +194,23 @@ pq traffic com.app --search token # Full-text search
 pq sessions com.app               # List sessions
 pq traffic com.app --export       # Export to SQLite + md
 
+# Attach (running process, no Zygote contamination)
+pq attach com.app hook.js         # Hook running process (PairIP-safe)
+
+# RCE & Native Scanning
+pq rce-scan com.app               # DEX-layer RCE vector scan
+pq native-scan com.app            # Native library vulnerability scan
+
+# Web Pentesting (Chrome CDP)
+pq web browse <url>               # Ad-hoc web session
+pq web start --url <url> --target $PKG  # Persistent pentest session
+pq web crawl                      # Discover pages/endpoints
+pq web audit                      # Security audit (headers, CSP, etc.)
+pq web cookies --audit            # Cookie security audit
+pq web jwt                        # JWT extraction and analysis
+pq web forms                      # Form/CSRF analysis
+pq web screenshot --name <label>  # Labeled screenshot
+
 # Management
 pq status                         # What's running
 pq gate list                      # Active gates
@@ -187,7 +221,7 @@ pq cleanup com.app                # Clean one app only
 
 ### Spawn Gating
 
-The spawn gate system (`spawn_gate.py`, 2,800+ lines) is the core of RedOps' Frida integration:
+The spawn gate system (`spawn_gate.py`) is the core of RedOps' Frida integration:
 
 - **Spawn-based injection** — hooks are injected the moment a process is created, before any app code runs. This catches initialization logic that attach-mode misses
 - **Crash survival** — with `--respawn`, the gate automatically re-injects hooks whenever the app restarts
@@ -308,25 +342,26 @@ Select target app
 
 | Metric | Value |
 |--------|-------|
-| **Kotlin Source Files** | 331 |
-| **Lines of Code** | 92,000+ |
-| **Feature Modules** | 17 |
+| **Kotlin Source Files** | 319 |
+| **Lines of Code** | 91,000+ |
+| **Feature Modules** | 14 |
 | **Room Entities** | 13 |
+| **Room DAOs** | 12 |
 | **Database Migrations** | 22 |
-| **Agent Scripts (Python/JS)** | 6,300+ lines |
+| **Agent Scripts (Python/JS)** | 43,000+ lines |
 
 ### Tech Stack
 
 | Layer | Technology |
 |-------|------------|
 | **UI** | Jetpack Compose, Material3, Compose Navigation 2.8.5 |
-| **Architecture** | Clean Architecture (MVVM), per-feature modules |
+| **Architecture** | Clean Architecture (MVVM), 14 feature modules |
 | **DI** | Hilt 2.52 |
-| **Persistence** | Room 2.6.1, DataStore, EncryptedSharedPreferences |
+| **Persistence** | Room 2.6.1 (22 migrations), DataStore, EncryptedSharedPreferences |
 | **Networking** | OkHttp 4.12, Retrofit, Ktor |
-| **Async** | Kotlin Coroutines + Flow |
+| **Async** | Kotlin Coroutines 1.7.3 + Flow |
 | **Build** | Gradle 8.12.1, AGP 8.7.3, KSP |
-| **Backend** | Python 3 (pq, spawn_gate), Frida, Claude CLI |
+| **Backend** | Python 3 (pq + 26 library modules), Frida 16.5.9+, Claude CLI |
 | **Target SDK** | 35 (Android 15) |
 | **Min SDK** | 26 (Android 8.0) |
 
@@ -336,25 +371,27 @@ Select target app
 ```
 app/src/main/java/com/redops/mobile/
 ├── feature/
-│   ├── agent/           # Claude AI bridge, streaming I/O, session mgmt
-│   ├── scanner/         # Component scanner, framework detection, vuln analysis
-│   ├── trafficcapture/  # HTTP/S capture, session storage, scope filtering
-│   ├── ipcmonitor/      # Dumpsys parsing, IPC enumeration, autofire, replay
-│   ├── repeater/        # HTTP request editor, history, response diffing
-│   ├── pqmanager/       # PqCommandExecutor, Frida lifecycle, gate management
-│   ├── intents/         # Intent builder + interceptor (dual-tab)
-│   ├── target/          # Consolidated target dashboard (4 sub-tabs)
-│   ├── data/            # SharedPrefs extraction + editing
-│   ├── manifest_inspection/  # Manifest security audit
-│   ├── home/            # Dashboard
-│   └── appselection/    # Target app picker
+│   ├── agent/              # Claude AI bridge, streaming I/O, session mgmt
+│   ├── scanner/            # Component scanner, framework detection, vuln analysis
+│   ├── trafficcapture/     # HTTP/S capture, session storage, scope filtering
+│   ├── ipcmonitor/         # Dumpsys parsing, IPC enumeration, autofire, replay
+│   ├── repeater/           # HTTP request editor, history, response diffing
+│   ├── pqmanager/          # PqCommandExecutor, Frida lifecycle, gate management
+│   ├── intents/            # Intent builder + interceptor (dual-tab)
+│   ├── target/             # Consolidated target dashboard (4 sub-tabs)
+│   ├── directprefs/        # Direct SharedPreferences extraction + editing
+│   ├── manifest_inspection/# Manifest security audit
+│   ├── netinfo/            # Network interface management
+│   ├── home/               # Dashboard
+│   ├── appselection/       # Target app picker
+│   └── data/               # Shared feature data layer
 ├── core/
 │   ├── domain/root/     # RootManager — su execution, root detection
 │   ├── domain/intent/   # Intent analysis, fuzzing, vulnerability detection
 │   ├── domain/apk/      # APK signing, AXML encoding, task hijack PoC
 │   ├── ui/              # Shared composables (CodeBlock, TerminalOutput, etc.)
 │   └── di/              # Hilt modules (App, Core, Database, Prefs)
-├── data/                # Room database, 13 entities, 11+ DAOs
+├── data/                # Room database, 13 entities, 12 DAOs
 ├── navigation/          # Nav graph, destinations, per-tab back stacks
 └── service/chroot/      # NetHunter verification, network interface mgmt
 ```
@@ -389,12 +426,15 @@ AI Agent suggestions ──> Back to any tool (guided next steps)
 | Component scanning | — | — | CLI only | — | GUI + auto-vuln detection |
 | IPC monitoring & replay | — | — | Partial | — | Full + autofire |
 | Frida hook management | — | Manual | — | — | Spawn gating, hot-reload, multi-script |
-| Framework detection | — | — | — | — | Auto (Flutter/Hermes/IL2CPP) |
+| Framework detection | — | — | — | — | Auto (Flutter/Hermes/IL2CPP/RN) |
 | Flutter introspection | — | — | — | — | Channel sniffing, live object reading, route injection |
 | Decompilation | — | — | — | CLI only | Integrated + streaming progress |
 | SharedPrefs editing | — | — | — | — | Direct GUI editor |
 | Task hijack PoC | — | — | — | — | Auto-generate + sign |
 | SSL pinning bypass | Burp cert | Per-script | — | — | Bundled, multiple techniques |
+| RCE vector scanning | — | — | — | — | DEX + native layer analysis |
+| WebView / CDP testing | — | — | — | — | Chrome DevTools Protocol integration |
+| Domain recon pipeline | — | — | — | — | 6-phase automated recon |
 | AI-powered analysis | — | — | — | — | Claude Agent with full context |
 | Report generation | Manual | — | — | — | Automated engagement reports |
 | Runs on phone | — | — | — | — | Native Android UI |
@@ -404,11 +444,12 @@ AI Agent suggestions ──> Back to any tool (guided next steps)
 <details>
 <summary><h2>Agent Documentation</h2></summary>
 
-RedOps includes comprehensive guides deployed to `/root/pentest/docs/`:
+RedOps includes 14 comprehensive guides deployed to `/root/pentest/docs/`:
 
 | Guide | Coverage |
 |-------|----------|
 | **PQ_COMPREHENSIVE.md** | Complete pq tool reference |
+| **PQ.md** | Quick-reference pq cheatsheet |
 | **FLUTTER_CTRL_GUIDE.md** | Flutter app analysis, Blutter bridge |
 | **HERMES_DECOMPILATION.md** | React Native Hermes bytecode |
 | **IL2CPP_GUIDE.md** | Unity game reverse engineering |
@@ -418,6 +459,20 @@ RedOps includes comprehensive guides deployed to `/root/pentest/docs/`:
 | **GRAPHQL_ENUM.md** | GraphQL introspection and endpoint discovery |
 | **RADARE2_WORKFLOW.md** | Native binary analysis |
 | **API_CHECKS.md** | API key/secret pattern matching |
+| **DEV_ENVIRONMENT_CHECKS.md** | Developer environment misconfiguration detection |
+| **PWA_INTERCEPTION.md** | Progressive Web App traffic interception |
+| **WEB_PENTEST_GUIDE.md** | WebView and web application testing |
+
+### Agent Skills
+
+The AI agent has 4 specialized skills that encode multi-phase pentesting workflows:
+
+| Skill | Purpose |
+|-------|---------|
+| **discovery** | 4-phase parallel reconnaissance (components, traffic, domains, code analysis) with merged synthesis |
+| **rce-investigation** | Remote code execution vulnerability analysis pipeline |
+| **report-workflow** | Automated engagement report generation (findings → HTML → PDF) |
+| **web-discovery** | Web-specific enumeration and WebView security assessment |
 
 </details>
 
