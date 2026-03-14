@@ -112,7 +112,7 @@ GUI control panel for the `pq` Frida toolkit.
 - **Gate Status** — visual indicators for every active spawn gate
 - **Live Output** — real-time Frida output with ANSI color rendering
 
-### AI Agent
+### RedOps Agent
 
 A Claude-powered security analyst that understands your entire investigation.
 
@@ -312,7 +312,7 @@ Select target app
   ├─ Extract data ────── SharedPrefs, databases, tokens
   ├─ Hook with Frida ─── Custom scripts via pq gate
   │
-  └─ AI Agent ────────── Connects findings, generates
+  └─ RedOps Agent ────────── Connects findings, generates
                           hooks, writes the report
 ```
 
@@ -386,14 +386,14 @@ app/src/main/java/com/redops/mobile/
 Every tool feeds into every other tool:
 
 ```
-Scanner findings ───────> AI Agent (analysis context)
+Scanner findings ───────> RedOps Agent (analysis context)
 Traffic captures ───────> Repeater (import for editing)
-Traffic captures ───────> AI Agent (HTTP pattern analysis)
+Traffic captures ───────> RedOps Agent (HTTP pattern analysis)
 IPC discovery ──────────> Intent Builder (pre-filled components)
-IPC discovery ──────────> AI Agent (vulnerability context)
-Data extraction ────────> AI Agent (token/credential analysis)
-Repeater requests ──────> AI Agent (request-level analysis)
-AI Agent suggestions ──> Back to any tool (guided next steps)
+IPC discovery ──────────> RedOps Agent (vulnerability context)
+Data extraction ────────> RedOps Agent (token/credential analysis)
+Repeater requests ──────> RedOps Agent (request-level analysis)
+RedOps Agent suggestions ──> Back to any tool (guided next steps)
 ```
 
 </details>
