@@ -129,24 +129,7 @@ A Claude-powered security analyst that understands your entire investigation.
 
 RedOps Mobile operates across two environments simultaneously:
 
-```
-ANDROID HOST            CHROOT (Kali)
-+-----------------+   +-----------------+
-| Compose UI      |   | /root/pentest/  |
-| - Target Dash   |   | - pq (CLI)      |
-| - Traffic Cap   |   | - spawn_gate    |
-| - IPC Monitor   | > | - pq_lib/       |
-| - Repeater      |su | - docs/         |
-| - PQ Manager    |   | - targets/      |
-| - AI Agent      |   | - Claude CLI    |
-|                 |   |                 |
-| Room, Hilt DI   |   | Frida, jadx     |
-+--------+--------+   +--------+--------+
-         +- PqCommandExecutor -+
-         su > chroot > entry
-```
-
-The **Android host** runs the APK — all UI, navigation, database persistence, and state management happen here. The **NetHunter chroot** has the Kali Linux toolchain — Python, Frida, jadx, apktool, the pq CLI, and Claude.
+The **Android host** runs the APK — all UI, navigation, database persistence, and state management. The **NetHunter chroot** (`/data/local/nhsystem/kali-arm64`) has the full Kali toolchain — Python, Frida, jadx, apktool, the pq CLI, and Claude.
 
 **`PqCommandExecutor`** is the bridge. Every command from the UI is routed through `su` → `chroot` → `android-entry` (which sets `PATH`, `HOME`, and locale) → the actual tool.
 
