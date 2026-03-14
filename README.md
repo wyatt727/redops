@@ -187,6 +187,7 @@ pq native-scan com.app            # Native library vulnerability scan
 pq web browse <url>               # Ad-hoc web session
 pq web start --url <url> --target $PKG  # Persistent pentest session
 pq web crawl                      # Discover pages/endpoints
+pq web spider                     # Active page visits + form submission
 pq web audit                      # Security audit (headers, CSP, etc.)
 pq web cookies --audit            # Cookie security audit
 pq web jwt                        # JWT extraction and analysis
