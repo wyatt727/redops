@@ -9,7 +9,7 @@
 [![Compose](https://img.shields.io/badge/Jetpack_Compose-Material3-4285F4?style=flat-square&logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose)
 [![Frida](https://img.shields.io/badge/Frida-Integrated-EF4444?style=flat-square)](https://frida.re)
 [![Claude](https://img.shields.io/badge/Claude_AI-Agent-D97706?style=flat-square)](https://anthropic.com)
-[![Lines](https://img.shields.io/badge/91%2C000%2B_Lines-Kotlin-A855F7?style=flat-square)](#architecture)
+[![Lines](https://img.shields.io/badge/91%2C500%2B_Lines-Kotlin-A855F7?style=flat-square)](#architecture)
 [![License](https://img.shields.io/badge/License-Proprietary-1F2937?style=flat-square)](#license)
 
 ---
@@ -46,7 +46,7 @@ Select any installed app and get an instant security profile.
 
 Capture 100% of an app's network traffic. Not "most of it" — all of it.
 
-- **Library Coverage** — hooks OkHttp3, HttpURLConnection, Volley, Cronet, gRPC, WebSocket, and native SSL. If the app makes a network call, RedOps sees it
+- **Library Coverage** — hooks OkHttp3, HttpURLConnection, Volley, Cronet, gRPC, WebSocket, and native SSL. R8-resilient — resolves obfuscated okio classes and methods via structural fingerprinting when named lookup fails
 - **Spawn-Mode Capture** — launch with hooks pre-loaded. Capture auth flows, startup API calls, and token exchanges that attach-mode misses
 - **SSL Pinning Bypass** — certificate pinning, public key pinning, network security config — all handled automatically alongside capture
 - **Session Management** — timestamped sessions with JSONL storage. Export to SQLite for external analysis
@@ -92,7 +92,11 @@ Bridge native and web security testing through Chrome DevTools Protocol integrat
 
 - **Chrome CDP** — connect to Chrome on the device for full WebView and browser testing
 - **Two Modes** — `browse` for ad-hoc recon (disposable scratch), `start` for persistent pentest sessions with organized output
-- **Full Audit Suite** — crawl pages, audit security headers/CSP, inspect cookies, extract JWTs, analyze forms/CSRF, discover endpoints
+- **Full Audit Suite** — crawl pages, spider with form submission, audit security headers/CSP, inspect cookies, extract JWTs, analyze forms/CSRF, discover endpoints
+- **DOM Interaction** — snapshot interactive elements, click buttons, fill inputs, select dropdowns, submit forms, hover — all via `@eN` element refs. React/Vue-compatible input injection
+- **Request Interception** — modify or block in-flight requests with pattern-matched rules. Add headers, rewrite URLs, inject auth tokens — persists across navigation via automatic re-injection
+- **Cookie Manipulation** — set and delete cookies at the CDP level, bypassing HttpOnly restrictions
+- **Console & WebSocket Monitoring** — capture console output and WebSocket frames in real-time, filter by level or pattern
 - **JS Execution** — evaluate arbitrary JavaScript inside WebView/browser contexts
 - **Screenshots** — labeled, timestamped captures organized per target
 
@@ -151,7 +155,7 @@ The **Android host** runs the APK — all UI, navigation, database persistence, 
 
 ## The pq Tool
 
-`pq` is a custom-built Python CLI backed by 26 library modules (~43,000 lines of Python/JS) that manages all Frida operations. It replaces direct Frida usage with a higher-level interface that handles server lifecycle, stealth, spawn gating, multi-script merging, traffic capture, and interactive hook control. Frida server is auto-started in stealth mode before any command that needs it.
+`pq` is a custom-built Python CLI backed by 26 library modules (~53,000 lines of Python/JS) that manages all Frida operations, traffic capture, and web pentesting. It replaces direct Frida usage with a higher-level interface that handles server lifecycle, stealth, spawn gating, multi-script merging, traffic interception, Chrome CDP integration, and interactive hook control. Frida server is auto-started in stealth mode before any command that needs it.
 
 ```bash
 # Discovery
@@ -187,11 +191,23 @@ pq native-scan com.app            # Native library vulnerability scan
 pq web browse <url>               # Ad-hoc web session
 pq web start --url <url> --target $PKG  # Persistent pentest session
 pq web crawl                      # Discover pages/endpoints
-pq web spider                     # Active page visits + form submission
+pq web spider                     # Active page spider + form submission
 pq web audit                      # Security audit (headers, CSP, etc.)
 pq web cookies --audit            # Cookie security audit
 pq web jwt                        # JWT extraction and analysis
 pq web forms                      # Form/CSRF analysis
+pq web snapshot                   # Interactive DOM elements with @eN refs
+pq web click @e5                  # Click element
+pq web fill @e3 "admin"           # Fill input (React/Vue-compatible)
+pq web select @e9 "English"       # Select dropdown option
+pq web submit @e7                 # Submit form
+pq web intercept on               # Enable request interception
+pq web intercept add --url "*/api/*" --add-header "X-Admin: true"
+pq web block "*.analytics.*"      # Block matching requests
+pq web cookie set role=admin      # Set cookie (bypasses HttpOnly)
+pq web headers set "Authorization" "Bearer tok"
+pq web console on                 # Start console capture
+pq web ws on                      # Start WebSocket monitoring
 pq web screenshot --name <label>  # Labeled screenshot
 
 # Management
@@ -325,13 +341,13 @@ Select target app
 
 | Metric | Value |
 |--------|-------|
-| **Kotlin Source Files** | 319 |
-| **Lines of Code** | 91,000+ |
+| **Kotlin Source Files** | 324 |
+| **Lines of Code** | 91,500+ |
 | **Feature Modules** | 14 |
 | **Room Entities** | 13 |
 | **Room DAOs** | 12 |
 | **Database Migrations** | 22 |
-| **Agent Scripts (Python/JS)** | 43,000+ lines |
+| **Agent Scripts (Python/JS)** | 53,000+ lines |
 
 ### Tech Stack
 
@@ -344,7 +360,7 @@ Select target app
 | **Networking** | OkHttp 4.12, Retrofit, Ktor |
 | **Async** | Kotlin Coroutines 1.7.3 + Flow |
 | **Build** | Gradle 8.12.1, AGP 8.7.3, KSP |
-| **Backend** | Python 3 (pq + 26 library modules), Frida 16.5.9+, Claude CLI |
+| **Backend** | Python 3 (pq + 26 library modules, ~53k lines), Frida 16.5.9+, Claude CLI |
 | **Target SDK** | 35 (Android 15) |
 | **Min SDK** | 26 (Android 8.0) |
 
@@ -369,11 +385,13 @@ app/src/main/java/com/redops/mobile/
 │   ├── appselection/       # Target app picker
 │   └── data/               # Shared feature data layer
 ├── core/
-│   ├── domain/root/     # RootManager — su execution, root detection
-│   ├── domain/intent/   # Intent analysis, fuzzing, vulnerability detection
-│   ├── domain/apk/      # APK signing, AXML encoding, task hijack PoC
-│   ├── ui/              # Shared composables (CodeBlock, TerminalOutput, etc.)
-│   └── di/              # Hilt modules (App, Core, Database, Prefs)
+│   ├── domain/root/        # RootManager — su execution, root detection
+│   ├── domain/shell/       # Shell execution abstraction (CommandBuilder, ProcessRunner)
+│   ├── domain/intent/      # Intent analysis, fuzzing, vulnerability detection
+│   ├── domain/interceptor/ # Intent + network interception management
+│   ├── domain/apk/         # APK signing, AXML encoding, task hijack PoC
+│   ├── ui/                 # Shared composables (CodeBlock, TerminalOutput, etc.)
+│   └── di/                 # Hilt modules (App, Core, Database, Prefs)
 ├── data/                # Room database, 13 entities, 12 DAOs
 ├── navigation/          # Nav graph, destinations, per-tab back stacks
 └── service/chroot/      # NetHunter verification, network interface mgmt
@@ -417,6 +435,7 @@ RedOps Agent suggestions ──> Back to any tool (guided next steps)
 | SSL pinning bypass | Burp cert | Per-script | — | — | Bundled, multiple techniques |
 | RCE vector scanning | — | — | — | — | DEX + native layer analysis |
 | WebView / CDP testing | — | — | — | — | Chrome DevTools Protocol integration |
+| In-browser request manipulation | Proxy-based | — | — | — | CDP intercept engine (no proxy needed) |
 | Domain recon pipeline | — | — | — | — | 6-phase automated recon |
 | AI-powered analysis | — | — | — | — | Claude Agent with full context |
 | Report generation | Manual | — | — | — | Automated engagement reports |
@@ -452,7 +471,7 @@ The AI agent has 4 specialized skills that encode multi-phase pentesting workflo
 
 | Skill | Purpose |
 |-------|---------|
-| **discovery** | 4-phase parallel reconnaissance (components, traffic, domains, code analysis) with merged synthesis |
+| **discovery** | 6-phase parallel reconnaissance (API endpoints, exposed interfaces, debug config, secrets, internal reachability, WebView/JS attack surface) with cross-phase chain detection |
 | **rce-investigation** | Remote code execution vulnerability analysis pipeline |
 | **report-workflow** | Automated engagement report generation (findings → HTML → PDF) |
 | **web-discovery** | Web-specific enumeration and WebView security assessment |
