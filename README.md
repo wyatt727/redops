@@ -51,6 +51,7 @@ Capture 100% of an app's network traffic. Not "most of it" — all of it.
 - **SSL Pinning Bypass** — certificate pinning, public key pinning, network security config — all handled automatically alongside capture
 - **Session Management** — timestamped sessions with JSONL storage. Export to SQLite for external analysis
 - **Scope Control** — include/exclude URL patterns to focus on what matters
+- **MITM Scan** — static analysis of decompiled source to auto-detect unknown HTTP clients (Fuel, Ktor, custom implementations). Generates Frida hook scripts without runtime scanning and injects them into `pq gate` flows automatically
 
 ### HTTP Repeater
 
@@ -93,12 +94,19 @@ Bridge native and web security testing through Chrome DevTools Protocol integrat
 - **Chrome CDP** — connect to Chrome on the device for full WebView and browser testing
 - **Two Modes** — `browse` for ad-hoc recon (disposable scratch), `start` for persistent pentest sessions with organized output
 - **Full Audit Suite** — crawl pages, spider with form submission, audit security headers/CSP, inspect cookies, extract JWTs, analyze forms/CSRF, discover endpoints
-- **DOM Interaction** — snapshot interactive elements, click buttons, fill inputs, select dropdowns, submit forms, hover — all via `@eN` element refs. React/Vue-compatible input injection
-- **Request Interception** — modify or block in-flight requests with pattern-matched rules. Add headers, rewrite URLs, inject auth tokens — persists across navigation via automatic re-injection
+- **DOM Interaction** — snapshot interactive elements, click buttons, fill inputs, select dropdowns, submit forms, hover — all via `@eN` element refs or CSS selectors. React/Vue-compatible input injection
+- **Request Interception** — modify or block in-flight requests with pattern-matched rules. Add headers, rewrite URLs, inject auth tokens, patch JSON/form bodies with `json_set`/`form_set` — persists across navigation via automatic re-injection. WebSocket frame tampering
+- **Event-Driven Hook Engine** — automate responses to page events with 6 triggers (`document_loaded`, `response_seen`, `request_seen`, `form_detected`, `dom_match`, `popup_opened`) and 8 actions (`eval_js`, `snapshot`, `screenshot`, `capture_request/response_body`, `switch_tab`, `save_event_json`, `save_page_html`). Hook presets for common workflows — the `discovery` preset loads 9 hooks (error-collector, graphql-capture, token-harvester, dom-sink-monitor, postmessage-sniffer, redirect-tracker, csrf-form-capture, upload-detector, oauth-handler)
+- **JS Bundle Analysis** — spider phase scans JavaScript bundles for 30+ secret patterns (AWS/GCP/Azure keys, Stripe/GitHub/Slack tokens, JWTs, database URLs), extracts API endpoints, and detects staging/debug config
+- **POST Form Submission** — spider exercises discovered forms with smart test data generation (guesses realistic values by field name), XSS reflection testing, and file upload testing across 11 extensions
+- **Tab Management** — list and switch Chrome tabs for popup and OAuth flows
+- **Findings Query** — `pq web findings` surfaces all results organized by category
+- **MCP Server** — 33 MCP tools expose the full CDP toolkit to Claude Code for AI-driven web testing with persistent connections and auto-reconnect
 - **Cookie Manipulation** — set and delete cookies at the CDP level, bypassing HttpOnly restrictions
 - **Console & WebSocket Monitoring** — capture console output and WebSocket frames in real-time, filter by level or pattern
-- **JS Execution** — evaluate arbitrary JavaScript inside WebView/browser contexts
+- **JS Execution** — evaluate arbitrary JavaScript inside WebView/browser contexts with `--save-as` for named result persistence
 - **Screenshots** — labeled, timestamped captures organized per target
+- **WAF Detection** — automatic detection and abort when WAF/challenge pages are encountered during crawl and spider
 
 ### RCE & Native Scanning
 
@@ -155,7 +163,7 @@ The **Android host** runs the APK — all UI, navigation, database persistence, 
 
 ## The pq Tool
 
-`pq` is a custom-built Python CLI backed by 26 library modules (~53,000 lines of Python/JS) that manages all Frida operations, traffic capture, and web pentesting. It replaces direct Frida usage with a higher-level interface that handles server lifecycle, stealth, spawn gating, multi-script merging, traffic interception, Chrome CDP integration, and interactive hook control. Frida server is auto-started in stealth mode before any command that needs it.
+`pq` is a custom-built Python CLI backed by 21 library modules (~61,000 lines of Python/JS) that manages all Frida operations, traffic capture, and web pentesting. It replaces direct Frida usage with a higher-level interface that handles server lifecycle, stealth, spawn gating, multi-script merging, traffic interception, Chrome CDP integration, MCP server, and interactive hook control. Frida server is auto-started in stealth mode before any command that needs it.
 
 ```bash
 # Discovery
@@ -187,28 +195,50 @@ pq attach com.app hook.js         # Hook running process (PairIP-safe)
 pq rce-scan com.app               # DEX-layer RCE vector scan
 pq native-scan com.app            # Native library vulnerability scan
 
+# MITM Scanning
+pq mitm-scan com.app              # Auto-detect unknown HTTP clients
+pq mitm-scan com.app --hook       # Detect + generate Frida hooks
+
 # Web Pentesting (Chrome CDP)
 pq web browse <url>               # Ad-hoc web session
 pq web start --url <url> --target $PKG  # Persistent pentest session
 pq web crawl                      # Discover pages/endpoints
-pq web spider                     # Active page spider + form submission
+pq web spider                     # Active spider + form submission + JS analysis
 pq web audit                      # Security audit (headers, CSP, etc.)
 pq web cookies --audit            # Cookie security audit
 pq web jwt                        # JWT extraction and analysis
 pq web forms                      # Form/CSRF analysis
+pq web findings                   # Query all findings by category
 pq web snapshot                   # Interactive DOM elements with @eN refs
 pq web click @e5                  # Click element
 pq web fill @e3 "admin"           # Fill input (React/Vue-compatible)
 pq web select @e9 "English"       # Select dropdown option
 pq web submit @e7                 # Submit form
+pq web tab list                   # List open Chrome tabs
+pq web tab select <id>            # Switch to tab (popups, OAuth)
 pq web intercept on               # Enable request interception
 pq web intercept add --url "*/api/*" --add-header "X-Admin: true"
+pq web intercept add --url "*/api/*" --json-set '{"role":"admin"}'
 pq web block "*.analytics.*"      # Block matching requests
 pq web cookie set role=admin      # Set cookie (bypasses HttpOnly)
 pq web headers set "Authorization" "Bearer tok"
 pq web console on                 # Start console capture
 pq web ws on                      # Start WebSocket monitoring
+pq web eval "document.title"      # Execute JS in page context
+pq web eval "fetch('/api')" --save-as api_check  # JS eval with named save
 pq web screenshot --name <label>  # Labeled screenshot
+
+# Hook Engine (event-driven automation)
+pq web hooks on                   # Enable hook engine
+pq web hooks add <trigger> <action> [opts]  # Add a hook rule
+pq web hooks preset discovery     # Load 9 discovery hooks
+pq web hooks list                 # Show active hooks
+pq web hooks log                  # View hook action results
+pq web hooks run                  # Manually fire hooks
+pq web hooks off                  # Disable hook engine
+
+# MCP Server (Claude Code integration)
+pq mcp                            # Launch MCP server (33 tools)
 
 # Management
 pq status                         # What's running
@@ -347,7 +377,7 @@ Select target app
 | **Room Entities** | 13 |
 | **Room DAOs** | 12 |
 | **Database Migrations** | 22 |
-| **Agent Scripts (Python/JS)** | 53,000+ lines |
+| **Agent Scripts (Python/JS)** | 61,000+ lines |
 
 ### Tech Stack
 
@@ -360,7 +390,7 @@ Select target app
 | **Networking** | OkHttp 4.12, Retrofit, Ktor |
 | **Async** | Kotlin Coroutines 1.7.3 + Flow |
 | **Build** | Gradle 8.12.1, AGP 8.7.3, KSP |
-| **Backend** | Python 3 (pq + 26 library modules, ~53k lines), Frida 16.5.9+, Claude CLI |
+| **Backend** | Python 3 (pq + 21 library modules, ~61k lines), Frida 16.5.9+, Claude CLI |
 | **Target SDK** | 35 (Android 15) |
 | **Min SDK** | 26 (Android 8.0) |
 
@@ -436,6 +466,9 @@ RedOps Agent suggestions ──> Back to any tool (guided next steps)
 | RCE vector scanning | — | — | — | — | DEX + native layer analysis |
 | WebView / CDP testing | — | — | — | — | Chrome DevTools Protocol integration |
 | In-browser request manipulation | Proxy-based | — | — | — | CDP intercept engine (no proxy needed) |
+| Event-driven hook automation | — | — | — | — | 6 triggers, 8 actions, presets, JSONL log |
+| JS bundle secret scanning | — | — | — | — | 30+ patterns (AWS, tokens, JWTs, configs) |
+| MCP server integration | — | — | — | — | 33 tools for AI-driven web testing |
 | Domain recon pipeline | — | — | — | — | 6-phase automated recon |
 | AI-powered analysis | — | — | — | — | Claude Agent with full context |
 | Report generation | Manual | — | — | — | Automated engagement reports |
@@ -446,12 +479,14 @@ RedOps Agent suggestions ──> Back to any tool (guided next steps)
 <details>
 <summary><h2>Agent Documentation</h2></summary>
 
-RedOps includes 14 comprehensive guides deployed to `/root/pentest/docs/`:
+RedOps includes 16 comprehensive guides deployed to `/root/pentest/docs/`:
 
 | Guide | Coverage |
 |-------|----------|
 | **PQ_COMPREHENSIVE.md** | Complete pq tool reference |
 | **PQ.md** | Quick-reference pq cheatsheet |
+| **MCP_SERVER.md** | MCP server architecture, 33 tools, connection lifecycle |
+| **MCP_SERVER_PLAN.md** | MCP implementation plan and complete tool schemas |
 | **FLUTTER_CTRL_GUIDE.md** | Flutter app analysis, Blutter bridge |
 | **HERMES_DECOMPILATION.md** | React Native Hermes bytecode |
 | **IL2CPP_GUIDE.md** | Unity game reverse engineering |
@@ -471,10 +506,10 @@ The AI agent has 4 specialized skills that encode multi-phase pentesting workflo
 
 | Skill | Purpose |
 |-------|---------|
-| **discovery** | 6-phase parallel reconnaissance (API endpoints, exposed interfaces, debug config, secrets, internal reachability, WebView/JS attack surface) with cross-phase chain detection |
+| **discovery** | 4 parallel phases + merged synthesis (API endpoints, exposed interfaces, debug config, secrets) with cross-phase chain detection and WebView/JS attack surface analysis |
 | **rce-investigation** | Remote code execution vulnerability analysis pipeline |
 | **report-workflow** | Automated engagement report generation (findings → HTML → PDF) |
-| **web-discovery** | Web-specific enumeration and WebView security assessment |
+| **web-discovery** | CDP-based web enumeration with event-driven hook engine — discovery preset loads 9 automated hooks (error-collector, graphql-capture, token-harvester, dom-sink-monitor, postmessage-sniffer, redirect-tracker, csrf-form-capture, upload-detector, oauth-handler), JS bundle analysis, and multi-phase assessment |
 
 </details>
 
