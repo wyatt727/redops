@@ -20,10 +20,10 @@ This repository is for a very specific operating model: rooted Android, Kali Net
 ## Status
 
 - Rooted-device workflow only. Shizuku support is gone.
-- NetHunter chroot is assumed at `/data/local/nhsystem/kali-arm64`.
-- `pq` is assumed at `/root/pentest/scripts/pq` inside the chroot.
+- NetHunter chroot is expected at `/data/local/nhsystem/kali-arm64`.
+- The app auto-deploys `pq`, agent assets, and `pq_wrapper.sh` on startup, then uses fixed runtime paths.
+- Frida server is bootstrapped through the deployment flow and stored at `/data/local/.cache/media_session_d`.
 - The app is in active development and currently optimized for debug/internal use.
-- The codebase has test dependencies configured, but this repository currently does not include committed unit or instrumentation test sources.
 
 ## What It Does
 
@@ -49,7 +49,8 @@ Core workflows:
 
 - Kali NetHunter chroot installed at `/data/local/nhsystem/kali-arm64`
 - A working Python virtual environment inside the chroot at `/data/local/nhsystem/kali-arm64/venv`
-- `pq` and agent assets deployed under `/root/pentest/`
+- Network access on first bootstrap so Frida setup can download the server binary
+- `pq` and agent assets auto-deployed under `/root/pentest/` on app startup
 - Working `su` access from the app
 
 ### Build Environment
@@ -71,6 +72,8 @@ These paths are hard-coded into the current implementation and should be treated
 | `pq` CLI | `/root/pentest/scripts/pq` |
 | Host-side wrapper | `/data/local/tmp/pq_wrapper.sh` |
 | Agent deployment root | `/root/pentest/` |
+
+The app bootstraps `pq` and the bundled agent assets into these locations on startup. Frida is also provisioned automatically when missing, but runtime command execution still expects these paths to exist and be usable.
 
 ## UI Overview
 
@@ -203,6 +206,7 @@ Before relying on the app, verify the expected environment manually:
 adb shell su -c 'test -d /data/local/nhsystem/kali-arm64 && echo chroot-ok'
 adb shell su -c 'chroot /data/local/nhsystem/kali-arm64 /bin/bash -lc "python3 --version"'
 adb shell su -c 'chroot /data/local/nhsystem/kali-arm64 /bin/bash -lc "test -x /root/pentest/scripts/pq && echo pq-ok"'
+adb shell su -c 'test -f /data/local/.cache/media_session_d && echo frida-ok'
 ```
 
 If those checks fail, fix the device/chroot setup first. The app assumes those paths exist.
@@ -304,7 +308,6 @@ Helper scripts in the repo:
 - Requires root and a correctly installed NetHunter chroot.
 - Hard-coded environment paths make this repo less portable than a typical Android app.
 - Some repo documentation still reflects older architecture or transitional states.
-- Automated tests are not presently committed under `app/src/test` or `app/src/androidTest`.
 - The app and manifest are currently development-oriented; review settings carefully before treating any build as production-ready.
 
 ## Safety And Scope
