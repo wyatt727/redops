@@ -17,6 +17,23 @@ RedOps Mobile is a native Android app that drives a full mobile application test
 
 ---
 
+## About the Builder
+
+**Wyatt Becker, OSCP** — offensive security engineer with 7 years of direct penetration-testing experience. Shipped **RedOps Mobile** solo as a proprietary end-to-end mobile security platform: native Android UI, chroot bridge, Frida tooling, reporting pipeline, and AI agent integration.
+
+Currently looking for **penetration tester**, **red team**, **cybersecurity engineer**, or **security consultant** roles. Remote worldwide or hybrid.
+
+| | |
+|---|---|
+| **Email** | [wyatt.becker@gmail.com](mailto:wyatt.becker@gmail.com) |
+| **Full resume + LinkedIn** | [wobbz.myddns.me](https://wobbz.myddns.me/) |
+| **Live demo** | [wobbz.myddns.me/redops](https://wobbz.myddns.me/redops) |
+| **Certs** | OSCP |
+
+Real engagement results are documented in [Selected Findings](#selected-findings) below.
+
+---
+
 ## Picking a Target
 
 Every workflow starts from an installed package. The app selector lists installed apps with filtering and jumps straight into the target dashboard.
