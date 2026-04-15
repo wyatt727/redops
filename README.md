@@ -27,6 +27,52 @@ Every workflow starts from an installed package. The app selector lists installe
 
 ---
 
+## Selected Findings
+
+Two critical vulnerabilities discovered during real engagements, driven end-to-end with RedOps Mobile. Both anonymized per NDA; technical chain components are stock public stack names and do not identify the targets.
+
+### One unauthenticated `GET` → 301K-user database → webshell → full host compromise
+
+**Target:** Production enterprise backend · 301K users
+**Severity:** Critical · Full RCE
+
+> 1. Credentials pulled from the APK via RedOps' SharedPreferences module
+> 2. Reused on an unauthenticated Spring Boot Admin console
+> 3. `GET /actuator/heapdump` → 260 MB of cleartext heap
+> 4. MySQL, Redis, and Nacos passwords sitting inside the heap
+> 5. Redis `CONFIG SET dir /www/wwwroot` + `dbfilename shell.php` + `SAVE`
+> 6. PHP webshell written into the BT Panel webroot → full host RCE
+
+Credential extraction, chain reproduction, and the final writeup all driven from the phone. No laptop on engagement.
+
+<div align="center">
+<img src="screenshots/23_agent_chat_rce_chain_writeup.jpg" alt="Agent writeup of the full RCE chain" width="320"/>
+</div>
+
+*Discovered during an authorized pentest engagement · anonymized per NDA*
+
+### Zero-click, persistent account takeover across a 34M-MAU Flutter game
+
+**Target:** Mass-market Android Flutter game · 34M+ MAU
+**Severity:** CVSS 9.8 · Zero-click · Persistent
+
+> 1. Traffic hooked with the RedOps CDP bridge (`pq attach --mitm`)
+> 2. VPS reverse-proxied legitimate game assets while injecting malicious JS inline
+> 3. Plugin-bridge Frida hooks intercepted every auth flow in real time
+> 4. Exfiltrated Facebook OAuth tokens, Google auth codes, session JWTs, device IDs on every launch
+> 5. Stolen Facebook token queried the Graph API directly from the in-app V8 context
+> 6. Chained as the delivery vector for a second, persistent code-injection path
+
+Flutter navigation discovery, V8 hooking, and live traffic interception all orchestrated from the phone. App behavior stayed normal to the victim.
+
+<div align="center">
+<img src="screenshots/28_agent_chat_exploit_chain_detail.jpg" alt="Agent writeup of the zero-click Flutter exploit chain" width="320"/>
+</div>
+
+*Discovered during an authorized pentest engagement · anonymized per NDA*
+
+---
+
 ## Target Dashboard
 
 The `Target` tab is a unified four-tab workspace for the selected app: **Overview**, **Manifest**, **Components**, and **Findings**. Everything you need for a first-pass static/dynamic assessment lives here.
@@ -142,17 +188,10 @@ Enumerates every app that has SharedPreferences on the device, then opens into a
 
 ## Agent
 
-The `Agent` tab is a chat/session workflow backed by the Claude CLI running inside the chroot, pre-loaded with the bundled `/root/pentest/CLAUDE.md` context, skills, and docs. Sessions can start fresh or open pre-loaded with target findings, traffic exports, or a full web setup.
+The `Agent` tab is a chat/session workflow backed by the Claude CLI running inside the chroot, pre-loaded with the bundled `/root/pentest/CLAUDE.md` context, skills, and docs. Sessions can start fresh or open pre-loaded with target findings, traffic exports, or a full web setup. Both engagements in [Selected Findings](#selected-findings) above came out of sessions just like this one — the agent chained the vulnerabilities and wrote the exploit paths while I drove the investigation.
 
 <div align="center">
-<img src="screenshots/08_agent_chat_new_session.jpg" alt="Agent — new session" width="280"/>
-<img src="screenshots/23_agent_chat_rce_chain_writeup.jpg" alt="Agent — RCE chain writeup" width="280"/>
-</div>
-
-Long-form exploit chain writeups, remediation notes, and follow-up questions all stay in the same thread.
-
-<div align="center">
-<img src="screenshots/28_agent_chat_exploit_chain_detail.jpg" alt="Agent — exploit chain detail" width="300"/>
+<img src="screenshots/08_agent_chat_new_session.jpg" alt="Agent — new session" width="300"/>
 </div>
 
 ---
