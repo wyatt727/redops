@@ -1,590 +1,326 @@
 <div align="center">
 
-<img src="docs/images/redops_logo.png" alt="RedOps Mobile" width="280"/>
+<img src="screenshots/app_logo.png" alt="RedOps Mobile" width="200"/>
 
-### The penetration testing platform that turns your phone into a weapon.
+# RedOps Mobile
+
+On-device Android application security tooling for rooted phones with a Kali NetHunter chroot.
 
 [![Android](https://img.shields.io/badge/Android-26%2B-34A853?style=flat-square&logo=android&logoColor=white)](https://developer.android.com)
 [![Kotlin](https://img.shields.io/badge/Kotlin-1.9.24-7F52FF?style=flat-square&logo=kotlin&logoColor=white)](https://kotlinlang.org)
-[![Compose](https://img.shields.io/badge/Jetpack_Compose-Material3-4285F4?style=flat-square&logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose)
-[![Frida](https://img.shields.io/badge/Frida-Integrated-EF4444?style=flat-square)](https://frida.re)
-[![Claude](https://img.shields.io/badge/Claude_AI-Agent-D97706?style=flat-square)](https://anthropic.com)
-[![Lines](https://img.shields.io/badge/91%2C500%2B_Lines-Kotlin-A855F7?style=flat-square)](#architecture)
+[![Gradle](https://img.shields.io/badge/Gradle-8.12.1-02303A?style=flat-square&logo=gradle&logoColor=white)](https://gradle.org)
 [![License](https://img.shields.io/badge/License-Proprietary-1F2937?style=flat-square)](#license)
+
+</div>
+
+RedOps Mobile is a native Android app that drives a full mobile application testing stack from the phone itself. The UI is Kotlin and Jetpack Compose; privileged work executes through `su` into a NetHunter chroot, then into the `pq` tooling and agent assets deployed under `/root/pentest/`. No laptop required mid-engagement — decompile, scan, capture, instrument, and write up findings all from the device.
 
 ---
 
-**RedOps Mobile** is a full-stack Android penetration testing platform — a native Kotlin/Compose UI fused with a Kali Linux chroot backend. No laptop. No USB tethering. Just your rooted phone running 17 security tools, an AI agent, and the full Kali toolchain from your pocket.
+## Picking a Target
 
-[Features](#features) · [How It Works](#how-it-works) · [Quick Start](#quick-start) · [The pq Tool](#the-pq-tool) · [Architecture](#architecture) · [Building](#building-from-source)
+Every workflow starts from an installed package. The app selector lists installed apps with filtering and jumps straight into the target dashboard.
 
+<div align="center">
+<img src="screenshots/27_target_app_selection_list.jpg" alt="Target app selection" width="300"/>
 </div>
 
 ---
 
-## Why This Exists
+## Target Dashboard
 
-Every mobile pentester knows the pain: you're testing an app on a phone, but your actual tools are on a laptop connected over ADB. You context-switch between Burp Suite, Frida CLI, jadx, drozer, and a dozen terminal tabs. Your phone is just a test device. The intelligence lives somewhere else.
+The `Target` tab is a unified four-tab workspace for the selected app: **Overview**, **Manifest**, **Components**, and **Findings**. Everything you need for a first-pass static/dynamic assessment lives here.
 
-**RedOps Mobile inverts this.** The phone *is* the pentesting platform. The UI runs natively on the device. The backend runs inside a NetHunter chroot with the full Kali arsenal. An AI agent powered by Claude connects every tool into a coherent investigation. The result is something that didn't exist before: an integrated, on-device mobile security platform that replaces a desk full of tools.
+### Overview — package info, framework detection, decompilation, scans
+
+The Overview tab surfaces package metadata, auto-detects the app framework (Flutter, Hermes/React Native, IL2CPP/Unity, etc.), and exposes decompilation and scan entry points in one screen.
+
+<div align="center">
+<img src="screenshots/01_target_overview_app_info_framework_detection.jpg" alt="Overview with framework detection" width="280"/>
+<img src="screenshots/04_target_overview_component_stats_data_extraction.jpg" alt="Component stats and data extraction" width="280"/>
+</div>
+
+Decompilation can run locally on-device or be offloaded to a VPS for heavier targets. The tool dropdown picks the right decompiler for the detected framework.
+
+<div align="center">
+<img src="screenshots/02_target_overview_decompiler_selection_dropdown.jpg" alt="Decompiler selection dropdown" width="280"/>
+<img src="screenshots/22_target_overview_vps_decompile_options.jpg" alt="VPS decompile options" width="280"/>
+</div>
+
+Native and RCE scans run from the same screen and feed directly into the Findings tab.
+
+<div align="center">
+<img src="screenshots/03_target_overview_rce_scan_results.jpg" alt="RCE scan results" width="300"/>
+</div>
+
+### Manifest — security flags and permissions
+
+Parses `AndroidManifest.xml` and flags risky flags, exported components, intent filters, and sensitive permissions.
+
+<div align="center">
+<img src="screenshots/05_target_manifest_security_flags_permissions.jpg" alt="Manifest security review" width="300"/>
+</div>
+
+### Components — exported surface
+
+Enumerates exported activities, services, receivers, and providers. Each row is a jumping-off point into the component test dialog — tap a row to open a prebuilt intent builder with suggested actions, categories, and data URIs.
+
+<div align="center">
+<img src="screenshots/06_target_components_exported_activities.jpg" alt="Exported components" width="280"/>
+<img src="screenshots/30_target_component_test_dialog.jpg" alt="Component test dialog" width="280"/>
+</div>
+
+### Findings — consolidated, filterable, agent-ready
+
+All scan results land here with severity filtering. Findings can be exported into an agent session for triage and writeup, and specific findings (task hijacking, intent redirection, deep link takeover, etc.) open dedicated test dialogs with one-click POC APK generation.
+
+<div align="center">
+<img src="screenshots/07_target_findings_summary_severity_filters.jpg" alt="Findings summary" width="280"/>
+<img src="screenshots/31_target_finding_task_hijacking_dialog.jpg" alt="Task hijacking test dialog" width="280"/>
+</div>
 
 ---
 
-## Features
+## Tools
 
-### Target Analysis
+The `Tools` tab groups everything operational: traffic capture, HTTP repeater, IPC monitor, SharedPreferences editor, and the PQ/Frida manager.
 
-Select any installed app and get an instant security profile.
+<div align="center">
+<img src="screenshots/09_tools_menu_overview.jpg" alt="Tools menu" width="300"/>
+</div>
 
-- **Component Scanner** — discovers every exported Activity, Service, Receiver, and Provider. Flags 20+ vulnerability types: missing permissions, debuggable, task hijacking, insecure deep links, cleartext traffic, backup misconfigs
-- **Framework Detection** — identifies Flutter, React Native (Hermes/JSC), Unity (IL2CPP/Mono), Xamarin, and native. Recommends the right decompilation strategy
-- **Decompilation** — JADX, Hermes decompiler, Blutter (Flutter), IL2CPP Dumper. Run locally or offload to VPS. Streams progress in real-time
-- **Manifest Inspection** — full AndroidManifest.xml security audit with inline vulnerability annotations
-- **Data Extraction** — pull SharedPreferences and SQLite databases. Edit values directly. Flip feature flags, inject tokens, escalate privileges
+### Traffic Capture
 
-### Traffic Interception
+HTTP/HTTPS capture is driven by a Frida-based MITM (attach or spawn) and stores entries in a Room-backed session database. Pick a target, confirm the capture mode, then browse requests and responses with full body inspection and scope filtering.
 
-Capture 100% of an app's network traffic. Not "most of it" — all of it.
+<div align="center">
+<img src="screenshots/10_traffic_capture_target_app_selection.jpg" alt="Traffic capture target selection" width="240"/>
+<img src="screenshots/20_traffic_capture_confirm_start_dialog.jpg" alt="Capture start confirmation" width="240"/>
+<img src="screenshots/11_traffic_capture_request_list.jpg" alt="Request list" width="240"/>
+</div>
 
-- **Library Coverage** — hooks OkHttp3, HttpURLConnection, Volley, Cronet, gRPC, WebSocket, and native SSL. R8-resilient — resolves obfuscated okio classes and methods via structural fingerprinting when named lookup fails
-- **Spawn-Mode Capture** — launch with hooks pre-loaded. Capture auth flows, startup API calls, and token exchanges that attach-mode misses
-- **SSL Pinning Bypass** — certificate pinning, public key pinning, network security config — all handled automatically alongside capture
-- **Session Management** — timestamped sessions with JSONL storage. Export to SQLite for external analysis
-- **Scope Control** — include/exclude URL patterns to focus on what matters
-- **MITM Scan** — static analysis of decompiled source to auto-detect unknown HTTP clients (Fuel, Ktor, custom implementations). Generates Frida hook scripts without runtime scanning and injects them into `pq gate` flows automatically
+<div align="center">
+<img src="screenshots/12_traffic_capture_request_detail_body_json.jpg" alt="Request detail — JSON body" width="280"/>
+<img src="screenshots/19_traffic_capture_entry_detail_params_headers.jpg" alt="Entry detail — params and headers" width="280"/>
+</div>
 
 ### HTTP Repeater
 
-Captured a request? Edit it and send it again.
+A Burp-style request repeater with persistent request/response pairs. Edit headers, method, body, resend, diff responses.
 
-- **Full Request Editor** — modify method, URL, headers, query parameters, and body
-- **Response History** — track how the server responds to each modification
-- **Parameter Toggling** — enable/disable parameters without deleting them
-- **Export to Agent** — send any request to the AI for deeper analysis
+<div align="center">
+<img src="screenshots/13_http_repeater_edit_request_body.jpg" alt="Repeater — edit request body" width="280"/>
+<img src="screenshots/14_http_repeater_response_json_body.jpg" alt="Repeater — JSON response" width="280"/>
+</div>
 
-### IPC Monitor
+### PQ Manager — Frida server and hooks
 
-Map every inter-process communication vector for a target app.
+The `pq` tool is the primary interface for all Frida operations. PQ Manager is its Android front-end: server lifecycle, stealth-named binary, favorites, hook/script discovery, and one-tap launch.
 
-- **Automated Discovery** — parses `dumpsys` output to find all exported components, intent filters, content provider authorities, and deep link schemes
-- **Vulnerability Enrichment** — automatically flags task hijacking targets, `file://` deep link schemes, implicit intent manipulation surfaces, and unprotected component access
-- **Autofire** — select discovered components and fire test intents in bulk with stealth enforcement
-- **Replay** — re-send captured IPC events with modified payloads
+<div align="center">
+<img src="screenshots/15_pq_manager_frida_server_favorites.jpg" alt="PQ Manager — server and favorites" width="280"/>
+<img src="screenshots/16_pq_manager_add_favorites_frida_hooks.jpg" alt="Add favorite hooks" width="280"/>
+</div>
 
-### Intent Builder & Interceptor
+Favorites expand to a detail view with the script source and parameters. Running a hook against a live app shows up as an in-game overlay, HUD, or whatever the script chooses to draw.
 
-Two-tab interface for intent construction and live interception.
+<div align="center">
+<img src="screenshots/25_pq_manager_favorite_expanded_detail.jpg" alt="Favorite expanded detail" width="280"/>
+<img src="screenshots/26_frida_hook_ingame_cheat_menu_overlay.jpg" alt="Frida hook overlay" width="280"/>
+</div>
 
-- **Build** — construct intents from scratch with action/category/data pickers, extra data editors, and component targeting. Launch with `startActivity`, `startService`, or `sendBroadcast`
-- **Intercept** — monitor in-flight intents in real-time. Inspect, modify, block, or forward
+### Data — SharedPreferences browser and editor
 
-### Task Hijack PoC Generator
+Enumerates every app that has SharedPreferences on the device, then opens into a per-app entry editor with a banner that flags world-readable/writable files and other security smells.
 
-Found a task affinity vulnerability? Generate a signed proof-of-concept APK in seconds.
-
-- Detects vulnerable task affinity configurations from the manifest scan
-- Generates a PoC APK with matching task affinity
-- Signs it using the chroot's build tools
-- Installs and demonstrates the hijack
-
-### Web Pentesting (CDP)
-
-Bridge native and web security testing through Chrome DevTools Protocol integration.
-
-- **Chrome CDP** — connect to Chrome on the device for full WebView and browser testing
-- **Two Modes** — `browse` for ad-hoc recon (disposable scratch), `start` for persistent pentest sessions with organized output
-- **Full Audit Suite** — crawl pages, spider with form submission, audit security headers/CSP, inspect cookies, extract JWTs, analyze forms/CSRF, discover endpoints
-- **DOM Interaction** — snapshot interactive elements, click buttons, fill inputs, select dropdowns, submit forms, hover — all via `@eN` element refs or CSS selectors. React/Vue-compatible input injection
-- **Request Interception** — modify or block in-flight requests with pattern-matched rules. Add headers, rewrite URLs, inject auth tokens, patch JSON/form bodies with `json_set`/`form_set` — persists across navigation via automatic re-injection. WebSocket frame tampering
-- **Event-Driven Hook Engine** — automate responses to page events with 6 triggers (`document_loaded`, `response_seen`, `request_seen`, `form_detected`, `dom_match`, `popup_opened`) and 8 actions (`eval_js`, `snapshot`, `screenshot`, `capture_request/response_body`, `switch_tab`, `save_event_json`, `save_page_html`). Hook presets for common workflows — the `discovery` preset loads 9 hooks (error-collector, graphql-capture, token-harvester, dom-sink-monitor, postmessage-sniffer, redirect-tracker, csrf-form-capture, upload-detector, oauth-handler)
-- **JS Bundle Analysis** — spider phase scans JavaScript bundles for 30+ secret patterns (AWS/GCP/Azure keys, Stripe/GitHub/Slack tokens, JWTs, database URLs), extracts API endpoints, and detects staging/debug config
-- **POST Form Submission** — spider exercises discovered forms with smart test data generation (guesses realistic values by field name), XSS reflection testing, and file upload testing across 11 extensions
-- **Tab Management** — list and switch Chrome tabs for popup and OAuth flows
-- **Findings Query** — `pq web findings` surfaces all results organized by category
-- **MCP Server** — 33 MCP tools expose the full CDP toolkit to Claude Code for AI-driven web testing with persistent connections and auto-reconnect
-- **Cookie Manipulation** — set and delete cookies at the CDP level, bypassing HttpOnly restrictions
-- **Console & WebSocket Monitoring** — capture console output and WebSocket frames in real-time, filter by level or pattern
-- **JS Execution** — evaluate arbitrary JavaScript inside WebView/browser contexts with `--save-as` for named result persistence
-- **Screenshots** — labeled, timestamped captures organized per target
-- **WAF Detection** — automatic detection and abort when WAF/challenge pages are encountered during crawl and spider
-
-### RCE & Native Scanning
-
-Automated vulnerability scanning at both DEX and native layers.
-
-- **RCE Scan** — discovers DEX-layer RCE vectors: `Runtime.exec`, `DexClassLoader`, WebView JavaScript bridges, deserialization sinks, intent redirect chains
-- **Native Scan** — analyzes native `.so` libraries for unsafe functions, symbol exposure, and exploitable patterns
-
-### PQ Manager
-
-GUI control panel for the `pq` Frida toolkit.
-
-- **Server Lifecycle** — start/stop Frida with stealth naming (`media_session_d`) and custom socket forwarding
-- **Script Browser** — discover available Frida hooks, mark favorites, launch with one tap
-- **Gate Status** — visual indicators for every active spawn gate
-- **Live Output** — real-time Frida output with ANSI color rendering
-
-### RedOps Agent
-
-A Claude-powered security analyst that understands your entire investigation.
-
-- **Context-Aware** — feed it scan results, captured traffic, decompiled code, or raw findings. It knows what tools you've run and what data is available
-- **Streaming Chat** — responses render in real-time via stream-json protocol. Not a web wrapper — the Claude CLI runs directly in the chroot
-- **Multi-Session** — maintain parallel investigation threads. Sessions persist across app restarts via Room database. Resume any conversation with full history
-- **Tool Integration** — the Agent can suggest next steps, generate Frida hooks, analyze traffic patterns, and connect findings across all your tools into a unified pentesting narrative
-- **Report Generation** — `/report-workflow` produces a professional pentest engagement report. Reads all findings, notes, captures, and code, presents a summary for approval, then generates a polished HTML report with evidence and exports to PDF — full report in minutes
-- **Asset Deployment** — automatically deploys and verifies the full agent toolkit (scripts, docs, skills, templates) to `/root/pentest/`
+<div align="center">
+<img src="screenshots/17_shared_prefs_package_list.jpg" alt="SharedPrefs package list" width="280"/>
+<img src="screenshots/21_shared_prefs_editor_entries_security_banner.jpg" alt="SharedPrefs entry editor" width="280"/>
+</div>
 
 ---
 
-## How It Works
+## Agent
 
-RedOps Mobile operates across two environments simultaneously:
+The `Agent` tab is a chat/session workflow backed by the Claude CLI running inside the chroot, pre-loaded with the bundled `/root/pentest/CLAUDE.md` context, skills, and docs. Sessions can start fresh or open pre-loaded with target findings, traffic exports, or a full web setup.
 
-The **Android host** runs the APK — all UI, navigation, database persistence, and state management. The **NetHunter chroot** (`/data/local/nhsystem/kali-arm64`) has the full Kali toolchain — Python, Frida, jadx, apktool, the pq CLI, and Claude.
+<div align="center">
+<img src="screenshots/08_agent_chat_new_session.jpg" alt="Agent — new session" width="280"/>
+<img src="screenshots/23_agent_chat_rce_chain_writeup.jpg" alt="Agent — RCE chain writeup" width="280"/>
+</div>
 
-**`PqCommandExecutor`** is the bridge. Every command from the UI is routed through `su` → `chroot` → `android-entry` (which sets `PATH`, `HOME`, and locale) → the actual tool.
+Long-form exploit chain writeups, remediation notes, and follow-up questions all stay in the same thread.
 
-<details>
-<summary>Execution modes</summary>
-
-| Method | Route | Use Case |
-|--------|-------|----------|
-| `execute()` | chroot → android-entry → bash | Standard commands |
-| `executeAndroid()` | `su -mm` (no chroot) | Host-only operations |
-| `executeSimple()` | nohup + background | Long-running detached tasks |
-| `executeQuick()` | 1-second timeout | Status checks |
-| `executeShellScript()` | configurable timeout | Decompilation scripts |
-| `executeWithStreaming()` | returns `Flow<Event>` | Real-time progress UI |
-
-</details>
+<div align="center">
+<img src="screenshots/28_agent_chat_exploit_chain_detail.jpg" alt="Agent — exploit chain detail" width="300"/>
+</div>
 
 ---
 
-## The pq Tool
+## Framework-Specific Tooling
 
-`pq` is a custom-built Python CLI backed by 21 library modules (~61,000 lines of Python/JS) that manages all Frida operations, traffic capture, and web pentesting. It replaces direct Frida usage with a higher-level interface that handles server lifecycle, stealth, spawn gating, multi-script concatenation, traffic interception, Chrome CDP integration, MCP server, and interactive hook control. Frida server is auto-started in stealth mode before any command that needs it.
+### Flutter
 
-```bash
-# Discovery
-pq packages [filter]              # List apps (PID if running)
-pq classes com.app -f Manager     # Find classes by pattern
-pq classes com.app -f Manager -m  # Show methods too
-pq methods com.app "ClassName"    # Method signatures
+Dart-compiled apps get dedicated tooling: live navigation route enumeration via a Frida overlay, and `blutter` snapshot analysis launched straight from the target view.
 
-# Spawn Gating — injected at process creation
-pq gate com.app hook.js           # Persistent injection
-pq gate com.app s1.js,s2.js       # Multi-script (single concatenated payload; shared scope)
-pq gate com.app hook.js --respawn # Re-hook on restart
-pq gate com.app --mitm            # Traffic from first byte
-pq gate com.app --mitm --native   # + native (Flutter, etc)
-pq gate com.app --mitm hook.js    # Traffic + custom hooks
-pq gate send com.app "status()"   # Interactive control
-pq gate reload com.app new.js     # Hot-reload scripts
-
-# Traffic
-pq traffic com.app --recent 50    # Query requests
-pq traffic com.app --search token # Full-text search
-pq sessions com.app               # List sessions
-pq traffic com.app --export       # Export to SQLite + md
-
-# Attach (running process, no Zygote contamination)
-pq attach com.app hook.js         # Hook running process (PairIP-safe)
-
-# RCE & Native Scanning
-pq rce-scan com.app               # DEX-layer RCE vector scan
-pq native-scan com.app            # Native library vulnerability scan
-
-# MITM Scanning
-pq mitm-scan com.app              # Auto-detect unknown HTTP clients
-pq mitm-scan com.app --hook       # Detect + generate Frida hooks
-
-# Web Pentesting (Chrome CDP)
-pq web browse <url>               # Ad-hoc web session
-pq web start --url <url> --target $PKG  # Persistent pentest session
-pq web crawl                      # Discover pages/endpoints
-pq web spider                     # Active spider + form submission + JS analysis
-pq web audit                      # Security audit (headers, CSP, etc.)
-pq web cookies --audit            # Cookie security audit
-pq web jwt                        # JWT extraction and analysis
-pq web forms                      # Form/CSRF analysis
-pq web findings                   # Query all findings by category
-pq web snapshot                   # Interactive DOM elements with @eN refs
-pq web click @e5                  # Click element
-pq web fill @e3 "admin"           # Fill input (React/Vue-compatible)
-pq web select @e9 "English"       # Select dropdown option
-pq web submit @e7                 # Submit form
-pq web tab list                   # List open Chrome tabs
-pq web tab select <id>            # Switch to tab (popups, OAuth)
-pq web intercept on               # Enable request interception
-pq web intercept add --url "*/api/*" --add-header "X-Admin: true"
-pq web intercept add --url "*/api/*" --json-set '{"role":"admin"}'
-pq web block "*.analytics.*"      # Block matching requests
-pq web cookie set role=admin      # Set cookie (bypasses HttpOnly)
-pq web headers set "Authorization" "Bearer tok"
-pq web console on                 # Start console capture
-pq web ws on                      # Start WebSocket monitoring
-pq web eval "document.title"      # Execute JS in page context
-pq web eval "fetch('/api')" --save-as api_check  # JS eval with named save
-pq web screenshot --name <label>  # Labeled screenshot
-
-# Hook Engine (event-driven automation)
-pq web hooks on                   # Enable hook engine
-pq web hooks add <trigger> <action> [opts]  # Add a hook rule
-pq web hooks preset discovery     # Load 9 discovery hooks
-pq web hooks list                 # Show active hooks
-pq web hooks log                  # View hook action results
-pq web hooks run                  # Manually fire hooks
-pq web hooks off                  # Disable hook engine
-
-# MCP Server (Claude Code integration)
-pq mcp                            # Launch MCP server (33 tools)
-
-# Management
-pq status                         # What's running
-pq gate list                      # Active gates
-pq gate stop                      # Kill all gates
-pq stop                           # Safe cleanup (all)
-pq cleanup com.app                # Clean one app only
-```
-
-### Spawn Gating
-
-The spawn gate system (`spawn_gate.py`) is the core of RedOps' Frida integration:
-
-- **Spawn-based injection** — hooks are injected the moment a process is created, before any app code runs. This catches initialization logic that attach-mode misses
-- **Crash survival** — with `--respawn`, the gate automatically re-injects hooks whenever the app restarts
-- **Multi-script concatenation** — multiple Frida scripts are loaded into one Frida payload so they share a single V8 isolate. This avoids multi-payload isolate issues, but the scripts now share one JS global scope and must be composition-safe
-- **Hot-reload** — send `SIGUSR1` to reload scripts without restarting the target app
-- **Interactive control** — call exported functions or evaluate arbitrary JavaScript in the context of a running hook via `pq gate send`
-- **PID registry** — all active gates tracked in `~/.pq/gate_pids.json` for reliable lifecycle management
-
-### Stealth
-
-Frida detection is common in hardened apps. `pq` runs Frida server under a stealth name (`media_session_d` or `sslkeylog`), communicates over a Unix socket instead of the default TCP port, and sets up ADB port forwarding to keep the connection off the network interface entirely.
-
-### Flutter Introspection
-
-Flutter apps compile to native ARM64 via Dart AOT, making traditional decompilation useless. RedOps has a three-tier system that turns them inside out:
-
-**Tier 1 — `flutter_ctrl.js`** works on any Flutter app immediately. Load it with `pq gate` and get:
-- **Channel sniffing** — intercepts all Platform Channel messages (Dart↔Java) in both directions, decoding both JSON and binary StandardMessageCodec
-- **Navigation injection** — push arbitrary routes (`dart.nav('/admin')`)
-- **Native hooking** — hook `libapp.so` offsets with Dart object extraction
-- **Channel interception** — modify messages in-flight (e.g. flip `vipStatus` in API responses before they reach the UI)
-
-**Tier 2 — Blutter bridge** adds full object introspection. Run Blutter's static analysis on `libapp.so`, then `gen_blutter_bridge.sh` fuses the class layouts with `flutter_ctrl.js` into a single `flutter_blutter.js`. Now every Dart object that passes through your hooks is readable — field names, types, nested objects, the full tree. Without the bridge, app objects show as opaque `<App:cid1141@ptr>`. With it, you get the actual `AtVipController` with its fields.
-
-**Tier 3 — `pq gate send`** makes it interactive. Adjust interception rules, inspect state, call hook functions, and evaluate JS — all live, without restarting the app:
-
-```bash
-pq gate send com.app "call dart.sniffFull()"     # Start channel monitor
-pq gate send com.app "call dart.channels()"       # What channels exist
-pq gate send com.app "call dart.status()"          # Hook/engine summary
-pq gate send com.app "call dart.findClass('Ctrl')" # Search app classes
-```
-
-### Domain Recon Pipeline
-
-`pq enum-domains` runs a 6-phase automated reconnaissance pipeline against a target's extracted domains:
-
-```bash
-pq enum-domains com.app               # Run full pipeline
-pq enum-domains com.app --force        # Re-run all phases from scratch
-pq enum-domains com.app --skip-graphql # Skip GraphQL phase
-```
-
-| Phase | Tool | What it does |
-|-------|------|-------------|
-| 1. Domain Discovery | `extract-domains` | Extracts URLs/domains from decompiled APK source, separates target-owned from third-party |
-| 2. Subdomain Enum | `subfinder` | Passive subdomain enumeration against discovered root domains |
-| 3. DNS Resolution | `dnsx` | Resolves all subdomains, filters to live hosts |
-| 4. HTTP Probing | `httpx` | Probes live hosts for HTTP endpoints with status codes, titles, and tech detection |
-| 5. Firebase Assessment | `firebase-enum` | Auto-extracts API keys from source and google-services.json. Tests RTDB, Storage, and Firestore — both unauthenticated and with each key — for read/write access, shallow enumeration, common path exposure, and query bypass |
-| 6. GraphQL Discovery | `enum-graphql` | Discovers GraphQL endpoints across all live hosts, tests for introspection and open access |
-
-If the target has prior traffic capture sessions, observed hostnames are automatically injected into the pipeline — domains seen in real traffic get enumerated alongside those found in code.
-
-Each phase is idempotent (skips if output exists, use `--force` to re-run). Individual phases can also be run standalone via `pq extract-domains`, `pq firebase-enum`, or `pq enum-graphql`.
-
-Output goes to `targets/<pkg>/recon/` with structured subdirectories per phase.
-
----
-
-## Quick Start
-
-### Prerequisites
-
-| Requirement | Details |
-|-------------|---------|
-| **Rooted Android** | Magisk, KernelSU, or APatch — any root solution works |
-| **Kali NetHunter** | Required — provides the chroot environment with full Kali toolchain |
-| **Frida 16.5.9+** | Auto-managed by `pq` — no manual setup |
-| **ADB access** | From the NetHunter terminal |
-
-### Install
-
-```bash
-# Build
-cd /root/Tools/redops-mobile
-./gradlew --no-daemon assembleDebug
-
-# Install
-adb install app/build/outputs/apk/debug/app-debug.apk
-```
-
-Launch the app and grant root permissions. RedOps automatically deploys the agent toolkit to `/root/pentest/` on first run.
-
-### First Assessment
-
-1. **Target tab** → Select an app → **Scan Components**
-2. Review exported components, permissions, vulnerability findings
-3. **Traffic Capture** → Start a spawn-mode capture → Use the target app → Stop capture → Browse requests
-4. **Repeater** → Import an interesting request → Modify parameters → Replay
-5. **AI tab** → Send findings to the Agent → Get analysis and next steps
-
-### Typical Workflow
-
-```
-Select target app
-  │
-  ├─ Scan components ─── Exported? Task hijack? Deep links?
-  ├─ Detect framework ── Flutter / Hermes / IL2CPP
-  ├─ Decompile ───────── Source for Agent context
-  │
-  ├─ Capture traffic ─── Auth flows, API calls, tokens
-  │   └─ Repeater ────── IDOR, parameter tampering
-  │
-  ├─ Monitor IPC ─────── Component enum, autofire
-  ├─ Extract data ────── SharedPrefs, databases, tokens
-  ├─ Hook with Frida ─── Custom scripts via pq gate
-  │
-  └─ RedOps Agent ────────── Connects findings, generates
-                          hooks, writes the report
-```
+<div align="center">
+<img src="screenshots/24_flutter_nav_routes_overlay.jpg" alt="Flutter navigation overlay" width="280"/>
+<img src="screenshots/29_flutter_blutter_script_overview_launch.jpg" alt="Flutter blutter launch" width="280"/>
+</div>
 
 ---
 
 ## Architecture
 
-### Stats
-
-| Metric | Value |
-|--------|-------|
-| **Kotlin Source Files** | 324 |
-| **Lines of Code** | 91,500+ |
-| **Feature Modules** | 14 |
-| **Room Entities** | 13 |
-| **Room DAOs** | 12 |
-| **Database Migrations** | 22 |
-| **Agent Scripts (Python/JS)** | 61,000+ lines |
-
-### Tech Stack
-
-| Layer | Technology |
-|-------|------------|
-| **UI** | Jetpack Compose, Material3, Compose Navigation 2.8.5 |
-| **Architecture** | Clean Architecture (MVVM), 14 feature modules |
-| **DI** | Hilt 2.52 |
-| **Persistence** | Room 2.6.1 (22 migrations), DataStore, EncryptedSharedPreferences |
-| **Networking** | OkHttp 4.12, Retrofit, Ktor |
-| **Async** | Kotlin Coroutines 1.7.3 + Flow |
-| **Build** | Gradle 8.12.1, AGP 8.7.3, KSP |
-| **Backend** | Python 3 (pq + 21 library modules, ~61k lines), Frida 16.5.9+, Claude CLI |
-| **Target SDK** | 35 (Android 15) |
-| **Min SDK** | 26 (Android 8.0) |
-
-<details>
-<summary><b>Module Map</b></summary>
+RedOps Mobile operates across two execution environments:
 
 ```
-app/src/main/java/com/redops/mobile/
-├── feature/
-│   ├── agent/              # Claude AI bridge, streaming I/O, session mgmt
-│   ├── scanner/            # Component scanner, framework detection, vuln analysis
-│   ├── trafficcapture/     # HTTP/S capture, session storage, scope filtering
-│   ├── ipcmonitor/         # Dumpsys parsing, IPC enumeration, autofire, replay
-│   ├── repeater/           # HTTP request editor, history, response diffing
-│   ├── pqmanager/          # PqCommandExecutor, Frida lifecycle, gate management
-│   ├── intents/            # Intent builder + interceptor (dual-tab)
-│   ├── target/             # Consolidated target dashboard (4 sub-tabs)
-│   ├── directprefs/        # Direct SharedPreferences extraction + editing
-│   ├── manifest_inspection/# Manifest security audit
-│   ├── netinfo/            # Network interface management
-│   ├── home/               # Dashboard
-│   ├── appselection/       # Target app picker
-│   └── data/               # Shared feature data layer
-├── core/
-│   ├── domain/root/        # RootManager — su execution, root detection
-│   ├── domain/shell/       # Shell execution abstraction (CommandBuilder, ProcessRunner)
-│   ├── domain/intent/      # Intent analysis, fuzzing, vulnerability detection
-│   ├── domain/interceptor/ # Intent + network interception management
-│   ├── domain/apk/         # APK signing, AXML encoding, task hijack PoC
-│   ├── ui/                 # Shared composables (CodeBlock, TerminalOutput, etc.)
-│   └── di/                 # Hilt modules (App, Core, Database, Prefs)
-├── data/                # Room database, 13 entities, 12 DAOs
-├── navigation/          # Nav graph, destinations, per-tab back stacks
-└── service/chroot/      # NetHunter verification, network interface mgmt
+         ANDROID HOST (phone)                    NETHUNTER CHROOT (Kali ARM64)
+                                                 /data/local/nhsystem/kali-arm64
+  RedOps APK (Kotlin/Compose)
+  ├─ PqCommandExecutor ──── su/chroot/entry ──> /root/pentest/scripts/pq
+  ├─ ClaudeBridge ──────── su/chroot/entry ──> claude CLI (stream-json)
+  ├─ ClaudeMdManager ───── deploys assets ──> /root/pentest/*
+  │
+  │  /data/local/tmp/
+  │  └─ pq_wrapper.sh ──── setsid+chroot ──> android-entry → pq
+  │
+  │  /data/local/.cache/
+  │  └─ media_session_d ← Frida server        /usr/local/bin/
+     (stealth-named)                           └─ android-entry (sets PATH/HOME)
 ```
 
-</details>
-
-<details>
-<summary><b>Cross-Tool Data Flow</b></summary>
-
-Every tool feeds into every other tool:
-
-```
-Scanner findings ───────> RedOps Agent (analysis context)
-Traffic captures ───────> Repeater (import for editing)
-Traffic captures ───────> RedOps Agent (HTTP pattern analysis)
-IPC discovery ──────────> Intent Builder (pre-filled components)
-IPC discovery ──────────> RedOps Agent (vulnerability context)
-Data extraction ────────> RedOps Agent (token/credential analysis)
-Repeater requests ──────> RedOps Agent (request-level analysis)
-RedOps Agent suggestions ──> Back to any tool (guided next steps)
-```
-
-</details>
+Most privileged operations flow through `Android UI → su → chroot → android-entry → pq/tooling`. `PqCommandExecutor` is the primary bridge.
 
 ---
 
-## Compared To Traditional Tools
+## Requirements
 
-| Capability | Burp Suite | Frida CLI | drozer | jadx | RedOps Mobile |
-|:-----------|:----------:|:---------:|:------:|:----:|:-------------:|
-| Traffic interception | Desktop | Script-based | — | — | On-device, spawn-mode |
-| Component scanning | — | — | CLI only | — | GUI + auto-vuln detection |
-| IPC monitoring & replay | — | — | Partial | — | Full + autofire |
-| Frida hook management | — | Manual | — | — | Spawn gating, hot-reload, multi-script |
-| Framework detection | — | — | — | — | Auto (Flutter/Hermes/IL2CPP/RN) |
-| Flutter introspection | — | — | — | — | Channel sniffing, live object reading, route injection |
-| Decompilation | — | — | — | CLI only | Integrated + streaming progress |
-| SharedPrefs editing | — | — | — | — | Direct GUI editor |
-| Task hijack PoC | — | — | — | — | Auto-generate + sign |
-| SSL pinning bypass | Burp cert | Per-script | — | — | Bundled, multiple techniques |
-| RCE vector scanning | — | — | — | — | DEX + native layer analysis |
-| WebView / CDP testing | — | — | — | — | Chrome DevTools Protocol integration |
-| In-browser request manipulation | Proxy-based | — | — | — | CDP intercept engine (no proxy needed) |
-| Event-driven hook automation | — | — | — | — | 6 triggers, 8 actions, presets, JSONL log |
-| JS bundle secret scanning | — | — | — | — | 30+ patterns (AWS, tokens, JWTs, configs) |
-| MCP server integration | — | — | — | — | 33 tools for AI-driven web testing |
-| Domain recon pipeline | — | — | — | — | 6-phase automated recon |
-| AI-powered analysis | — | — | — | — | Claude Agent with full context |
-| Report generation | Manual | — | — | — | Automated engagement reports |
-| Runs on phone | — | — | — | — | Native Android UI |
+### Device
 
----
-
-<details>
-<summary><h2>Agent Documentation</h2></summary>
-
-RedOps includes 16 comprehensive guides deployed to `/root/pentest/docs/`:
-
-| Guide | Coverage |
-|-------|----------|
-| **PQ_COMPREHENSIVE.md** | Complete pq tool reference |
-| **PQ.md** | Quick-reference pq cheatsheet |
-| **MCP_SERVER.md** | MCP server architecture, 33 tools, connection lifecycle |
-| **MCP_SERVER_PLAN.md** | MCP implementation plan and complete tool schemas |
-| **FLUTTER_CTRL_GUIDE.md** | Flutter app analysis, Blutter bridge |
-| **HERMES_DECOMPILATION.md** | React Native Hermes bytecode |
-| **IL2CPP_GUIDE.md** | Unity game reverse engineering |
-| **GAME_HACKING.md** | Economy manipulation, IAP bypass, ad rewards |
-| **APK_MODIFICATION_GUIDE.md** | Decompile → patch → sign → install |
-| **DOMAIN_RECON_WORKFLOW.md** | Subdomain enumeration, HTTP probing |
-| **GRAPHQL_ENUM.md** | GraphQL introspection and endpoint discovery |
-| **RADARE2_WORKFLOW.md** | Native binary analysis |
-| **API_CHECKS.md** | API key/secret pattern matching |
-| **DEV_ENVIRONMENT_CHECKS.md** | Developer environment misconfiguration detection |
-| **PWA_INTERCEPTION.md** | Progressive Web App traffic interception |
-| **WEB_PENTEST_GUIDE.md** | WebView and web application testing |
-
-### Agent Skills
-
-The AI agent has 4 specialized skills that encode multi-phase pentesting workflows:
-
-| Skill | Purpose |
-|-------|---------|
-| **discovery** | 4 parallel phases + merged synthesis (API endpoints, exposed interfaces, debug config, secrets) with cross-phase chain detection and WebView/JS attack surface analysis |
-| **rce-investigation** | Remote code execution vulnerability analysis pipeline |
-| **report-workflow** | Automated engagement report generation (findings → HTML → PDF) |
-| **web-discovery** | CDP-based web enumeration with event-driven hook engine — discovery preset loads 9 automated hooks (error-collector, graphql-capture, token-harvester, dom-sink-monitor, postmessage-sniffer, redirect-tracker, csrf-form-capture, upload-detector, oauth-handler), JS bundle analysis, and multi-phase assessment |
-
-</details>
-
----
-
-## Building from Source
-
-### Prerequisites
-
-- **JDK 17** (OpenJDK)
-- **Android SDK** with API 35
-- **Gradle 8.11+** (wrapper included)
+- Root via Magisk, KernelSU, APatch, or equivalent
+- Android 8.0+ (API 26+)
+- Kali NetHunter chroot installed at `/data/local/nhsystem/kali-arm64`
+- Python venv inside the chroot at `/data/local/nhsystem/kali-arm64/venv`
+- Network access on first bootstrap (Frida server download)
 
 ### Build
 
-```bash
-git clone <repository-url>
-cd redops-mobile
+- JDK 17
+- Android SDK with API 35
+- Gradle wrapper included
+- ADB
 
-# Debug build
+### Hard-coded Runtime Paths
+
+| Purpose | Path |
+|---|---|
+| NetHunter root | `/data/local/nhsystem/kali-arm64` |
+| Chroot entry bridge | `/usr/local/bin/android-entry` |
+| Python venv | `/data/local/nhsystem/kali-arm64/venv` |
+| `pq` CLI | `/root/pentest/scripts/pq` |
+| Host-side wrapper | `/data/local/tmp/pq_wrapper.sh` |
+| Agent deployment root | `/root/pentest/` |
+| Frida server (stealth) | `/data/local/.cache/media_session_d` |
+
+The app bootstraps `pq`, agent assets, and `pq_wrapper.sh` into these locations on startup. Frida is provisioned automatically when missing.
+
+---
+
+## Build
+
+```bash
+# Debug (primary)
 ./gradlew --no-daemon assembleDebug
 
-# Release build
+# Tracing (debug + agent tracing)
+./gradlew --no-daemon assembleTracing
+
+# Release
 ./gradlew --no-daemon assembleRelease
 ```
 
-> **Always use `--no-daemon`.** The Gradle daemon consumes ~1.7GB and will crash memory-constrained devices.
+Always pass `--no-daemon` — the Gradle daemon holds ~1.7GB of RAM and will crash the phone on incremental builds.
 
-### Output
+| Variant | Output |
+|---|---|
+| Debug | `app/build/outputs/apk/debug/app-debug.apk` |
+| Tracing | `app/build/outputs/apk/tracing/app-tracing.apk` |
+| Release | `app/build/outputs/apk/release/app-release.apk` |
 
-| Build | Path |
-|-------|------|
-| Debug APK | `app/build/outputs/apk/debug/app-debug.apk` |
-| Release APK | `app/build/outputs/apk/release/app-release.apk` |
+Install with `adb install -r <apk>`.
 
 ---
 
-<details>
-<summary><h2>Dual File System</h2></summary>
+## First Run
 
-Agent scripts exist in two places. Both must stay in sync.
+1. Build the debug APK and install it.
+2. Launch the app and grant root.
+3. Confirm the NetHunter chroot is reachable and `/root/pentest/` has been populated.
+4. Open `Target`, pick a package, and run the initial scan.
 
-| Location | Purpose | Edit When |
-|----------|---------|-----------|
-| `/root/pentest/` | Live deployed files | Testing changes immediately |
-| `app/src/main/assets/agent/` | APK source | Persisting changes across installs |
+Manual environment sanity check:
 
 ```bash
-# After testing changes in /root/pentest/:
-./sync_to_source.sh                    # Sync deployed → source
-./compare_deployed_vs_source.sh        # Verify sync
+adb shell su -c 'test -d /data/local/nhsystem/kali-arm64 && echo chroot-ok'
+adb shell su -c 'chroot /data/local/nhsystem/kali-arm64 /bin/bash -lc "test -x /root/pentest/scripts/pq && echo pq-ok"'
+adb shell su -c 'test -f /data/local/.cache/media_session_d && echo frida-ok'
 ```
 
-</details>
+---
+
+## Bundled Agent Assets
+
+The APK carries agent-side docs, skills, and scripts that are deployed into `/root/pentest/` on startup.
+
+**Skills**: `discovery`, `rce-investigation`, `report-workflow`, `web-discovery`
+
+**Docs** (non-exhaustive): `PQ_COMPREHENSIVE.md`, `MCP_SERVER.md`, `WEB_PENTEST_GUIDE.md`, `FLUTTER_CTRL_GUIDE.md`, `DOMAIN_RECON_WORKFLOW.md`, `GRAPHQL_ENUM.md`, `HERMES_DECOMPILATION.md`, `IL2CPP_GUIDE.md`, `GAME_HACKING.md`
+
+See `app/src/main/assets/agent/` for the full set.
 
 ---
+
+## Repo Layout
+
+```text
+app/src/main/java/com/redops/mobile/
+  core/            Shared domain, shell, root, UI, persistence
+  feature/         agent, scanner, target, trafficcapture, repeater,
+                   pqmanager, ipcmonitor, intents, data, manifest_inspection
+  navigation/      Cross-tab nav graph
+  service/chroot/  NetHunter environment verification
+
+app/src/main/assets/agent/
+  CLAUDE.md        Agent system prompt (deployed to /root/pentest/CLAUDE.md)
+  scripts/         pq CLI and library modules
+  docs/            Pentest guides
+  skills/          Claude skills
+  templates/       Checklist templates
+
+docs/              Interception writeups, troubleshooting, architecture notes
+screenshots/       Screens used in this README
+```
+
+---
+
+## Dual File System
+
+Agent-facing files live in two places during development:
+
+| Location | Purpose |
+|---|---|
+| `/root/pentest/` | Live deployed runtime on the device/chroot |
+| `app/src/main/assets/agent/` | Source of truth packaged into the APK |
+
+Helpers: `sync_to_source.sh`, `compare_deployed_vs_source.sh`, `deploy_from_source.sh`.
+
+---
+
+## Safety and Scope
+
+Intended for authorized security testing and research on systems you are permitted to assess.
 
 ## License
 
 Proprietary. All rights reserved.
-
----
-
-## Acknowledgments
-
-- [Frida](https://frida.re/) — dynamic instrumentation
-- [jadx](https://github.com/skylot/jadx) — Android decompilation
-- [mitmproxy](https://mitmproxy.org/) — HTTPS interception
-- [Anthropic Claude](https://anthropic.com/) — AI agent backbone
-- [Kali NetHunter](https://www.kali.org/docs/nethunter/) — mobile pentesting platform
-
----
-
-<div align="center">
-
-*Built for authorized security testing. Your phone is now the most dangerous thing in the room.*
-
-</div>
