@@ -26,7 +26,8 @@ Currently looking for **penetration tester**, **red team**, **cybersecurity engi
 | | |
 |---|---|
 | **Email** | [wyatt.becker@gmail.com](mailto:wyatt.becker@gmail.com) |
-| **Full resume + LinkedIn** | [wobbz.myddns.me](https://wobbz.myddns.me/) |
+| **Full resume** | [wobbz.myddns.me](https://wobbz.myddns.me/) |
+| **LinkedIn** | [linkedin.com/in/wyattbecker](https://linkedin.com/in/wyattbecker) |
 | **Live demo** | [wobbz.myddns.me/redops](https://wobbz.myddns.me/redops) |
 | **Certs** | OSCP |
 
