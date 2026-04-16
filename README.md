@@ -57,9 +57,7 @@ The `Target` tab is a unified four-tab workspace for the selected app: **Overvie
 The Overview tab surfaces package metadata, auto-detects the app framework (Flutter, Hermes/React Native, IL2CPP/Unity, etc.), and exposes decompilation and scan entry points in one screen.
 
 <div align="center">
-<img src="screenshots/01_target_overview_app_info_framework_detection.jpg" alt="Overview with framework detection" width="280"/>
-<img src="screenshots/04_target_overview_component_stats_data_extraction.jpg" alt="Component stats and data extraction" width="280"/>
-
+<table><tr><td align="center"><img src="screenshots/01_target_overview_app_info_framework_detection.jpg" alt="Overview with framework detection" width="280"/></td><td align="center"><img src="screenshots/04_target_overview_component_stats_data_extraction.jpg" alt="Component stats and data extraction" width="280"/></td></tr></table>
 
 <p><em>Figure 2 — Framework auto-detection (Cronet / Chromium QUIC) and component statistics with exported counts</em></p>
 </div>
@@ -67,9 +65,7 @@ The Overview tab surfaces package metadata, auto-detects the app framework (Flut
 Decompilation can run locally on-device or be offloaded to a VPS for heavier targets. The tool dropdown picks the right decompiler for the detected framework.
 
 <div align="center">
-<img src="screenshots/02_target_overview_decompiler_selection_dropdown.jpg" alt="Decompiler selection dropdown" width="280"/>
-<img src="screenshots/22_target_overview_vps_decompile_options.jpg" alt="VPS decompile options" width="280"/>
-
+<table><tr><td align="center"><img src="screenshots/02_target_overview_decompiler_selection_dropdown.jpg" alt="Decompiler selection dropdown" width="280"/></td><td align="center"><img src="screenshots/22_target_overview_vps_decompile_options.jpg" alt="VPS decompile options" width="280"/></td></tr></table>
 
 <p><em>Figure 3 — Four decompilers auto-recommended per framework, with VPS offload for heavy targets</em></p>
 </div>
@@ -99,9 +95,7 @@ Parses `AndroidManifest.xml` and flags risky flags, exported components, intent 
 Enumerates exported activities, services, receivers, and providers. Each row is a jumping-off point into the component test dialog — tap a row to open a prebuilt intent builder with suggested actions, categories, and data URIs.
 
 <div align="center">
-<img src="screenshots/06_target_components_exported_activities.jpg" alt="Exported components" width="280"/>
-<img src="screenshots/30_target_component_test_dialog.jpg" alt="Component test dialog" width="280"/>
-
+<table><tr><td align="center"><img src="screenshots/06_target_components_exported_activities.jpg" alt="Exported components" width="280"/></td><td align="center"><img src="screenshots/30_target_component_test_dialog.jpg" alt="Component test dialog" width="280"/></td></tr></table>
 
 <p><em>Figure 6 — 225 components enumerated — tap any row to open a prebuilt intent builder with fuzz launcher</em></p>
 </div>
@@ -111,9 +105,7 @@ Enumerates exported activities, services, receivers, and providers. Each row is 
 All scan results land here with severity filtering. Findings can be exported into an agent session for triage and writeup, and specific findings (task hijacking, intent redirection, deep link takeover, etc.) open dedicated test dialogs with one-click POC APK generation.
 
 <div align="center">
-<img src="screenshots/07_target_findings_summary_severity_filters.jpg" alt="Findings summary" width="280"/>
-<img src="screenshots/31_target_finding_task_hijacking_dialog.jpg" alt="Task hijacking test dialog" width="280"/>
-
+<table><tr><td align="center"><img src="screenshots/07_target_findings_summary_severity_filters.jpg" alt="Findings summary" width="280"/></td><td align="center"><img src="screenshots/31_target_finding_task_hijacking_dialog.jpg" alt="Task hijacking test dialog" width="280"/></td></tr></table>
 
 <p><em>Figure 7 — Severity-filtered findings with template-based agent export and one-click POC APK generation</em></p>
 </div>
@@ -136,20 +128,15 @@ The `Tools` tab groups everything operational: traffic capture, HTTP repeater, I
 HTTP/HTTPS capture is driven by a Frida-based MITM (attach or spawn) and stores entries in a Room-backed session database. Pick a target, confirm the capture mode, then browse requests and responses with full body inspection and scope filtering.
 
 <div align="center">
-<img src="screenshots/10_traffic_capture_target_app_selection.jpg" alt="Traffic capture target selection" width="240"/>
-<img src="screenshots/20_traffic_capture_confirm_start_dialog.jpg" alt="Capture start confirmation" width="240"/>
-<img src="screenshots/11_traffic_capture_request_list.jpg" alt="Request list" width="240"/>
-
+<table><tr><td align="center"><img src="screenshots/10_traffic_capture_target_app_selection.jpg" alt="Traffic capture target selection" width="240"/></td><td align="center"><img src="screenshots/20_traffic_capture_confirm_start_dialog.jpg" alt="Capture start confirmation" width="240"/></td><td align="center"><img src="screenshots/11_traffic_capture_request_list.jpg" alt="Request list" width="240"/></td></tr></table>
 
 <p><em>Figure 9 — Traffic capture flow: target selection → attach-mode confirmation → live request stream</em></p>
 </div>
 
 <div align="center">
-<img src="screenshots/12_traffic_capture_request_detail_body_json.jpg" alt="Request detail — JSON body" width="280"/>
-<img src="screenshots/19_traffic_capture_entry_detail_params_headers.jpg" alt="Entry detail — params and headers" width="280"/>
+<table><tr><td align="center"><img src="screenshots/12_traffic_capture_request_detail_body_json.jpg" alt="Request detail — JSON body" width="280"/></td><td align="center"><img src="screenshots/19_traffic_capture_entry_detail_params_headers.jpg" alt="Entry detail — params and headers" width="280"/></td></tr></table>
 
-
-<p><em>Figure 10 — Request inspection — JSON body with session telemetry (left) and full headers with query params (right)</em></p>
+<p><em>Figure 10 — Request body with session telemetry, and full header/query-parameter breakdown</em></p>
 </div>
 
 ### HTTP Repeater
@@ -157,9 +144,7 @@ HTTP/HTTPS capture is driven by a Frida-based MITM (attach or spawn) and stores 
 A Burp-style request repeater with persistent request/response pairs. Edit headers, method, body, resend, diff responses.
 
 <div align="center">
-<img src="screenshots/13_http_repeater_edit_request_body.jpg" alt="Repeater — edit request body" width="280"/>
-<img src="screenshots/14_http_repeater_response_json_body.jpg" alt="Repeater — JSON response" width="280"/>
-
+<table><tr><td align="center"><img src="screenshots/13_http_repeater_edit_request_body.jpg" alt="Repeater — edit request body" width="280"/></td><td align="center"><img src="screenshots/14_http_repeater_response_json_body.jpg" alt="Repeater — JSON response" width="280"/></td></tr></table>
 
 <p><em>Figure 11 — Burp-style HTTP repeater with editable body, headers, and response history</em></p>
 </div>
@@ -169,9 +154,7 @@ A Burp-style request repeater with persistent request/response pairs. Edit heade
 The `pq` tool is the primary interface for all Frida operations. PQ Manager is its Android front-end: server lifecycle, stealth-named binary, favorites, hook/script discovery, and one-tap launch.
 
 <div align="center">
-<img src="screenshots/15_pq_manager_frida_server_favorites.jpg" alt="PQ Manager — server and favorites" width="280"/>
-<img src="screenshots/16_pq_manager_add_favorites_frida_hooks.jpg" alt="Add favorite hooks" width="280"/>
-
+<table><tr><td align="center"><img src="screenshots/15_pq_manager_frida_server_favorites.jpg" alt="PQ Manager — server and favorites" width="280"/></td><td align="center"><img src="screenshots/16_pq_manager_add_favorites_frida_hooks.jpg" alt="Add favorite hooks" width="280"/></td></tr></table>
 
 <p><em>Figure 12 — PQ Manager: Frida server lifecycle with stealth naming, and per-target hook discovery</em></p>
 </div>
@@ -179,9 +162,7 @@ The `pq` tool is the primary interface for all Frida operations. PQ Manager is i
 Favorites expand to a detail view with the script source and parameters. Running a hook against a live app shows up as an in-game overlay, HUD, or whatever the script chooses to draw.
 
 <div align="center">
-<img src="screenshots/25_pq_manager_favorite_expanded_detail.jpg" alt="Favorite expanded detail" width="280"/>
-<img src="screenshots/26_frida_hook_ingame_cheat_menu_overlay.jpg" alt="Frida hook overlay" width="280"/>
-
+<table><tr><td align="center"><img src="screenshots/25_pq_manager_favorite_expanded_detail.jpg" alt="Favorite expanded detail" width="280"/></td><td align="center"><img src="screenshots/26_frida_hook_ingame_cheat_menu_overlay.jpg" alt="Frida hook overlay" width="280"/></td></tr></table>
 
 <p><em>Figure 13 — Favorite hook expanded with usage metadata, and a live in-game cheat overlay on a Unity target</em></p>
 </div>
@@ -191,9 +172,7 @@ Favorites expand to a detail view with the script source and parameters. Running
 Enumerates every app that has SharedPreferences on the device, then opens into a per-app entry editor with a banner that flags world-readable/writable files and other security smells.
 
 <div align="center">
-<img src="screenshots/17_shared_prefs_package_list.jpg" alt="SharedPrefs package list" width="280"/>
-<img src="screenshots/21_shared_prefs_editor_entries_security_banner.jpg" alt="SharedPrefs entry editor" width="280"/>
-
+<table><tr><td align="center"><img src="screenshots/17_shared_prefs_package_list.jpg" alt="SharedPrefs package list" width="280"/></td><td align="center"><img src="screenshots/21_shared_prefs_editor_entries_security_banner.jpg" alt="SharedPrefs entry editor" width="280"/></td></tr></table>
 
 <p><em>Figure 14 — SharedPreferences scanner across 333 packages, with per-entry editor and sensitive-key banner</em></p>
 </div>
@@ -220,9 +199,7 @@ The `Agent` tab is a chat/session workflow backed by the Claude CLI running insi
 Dart-compiled apps get dedicated tooling: live navigation route enumeration via a Frida overlay, and `blutter` snapshot analysis launched straight from the target view.
 
 <div align="center">
-<img src="screenshots/24_flutter_nav_routes_overlay.jpg" alt="Flutter navigation overlay" width="280"/>
-<img src="screenshots/29_flutter_blutter_script_overview_launch.jpg" alt="Flutter blutter launch" width="280"/>
-
+<table><tr><td align="center"><img src="screenshots/24_flutter_nav_routes_overlay.jpg" alt="Flutter navigation overlay" width="280"/></td><td align="center"><img src="screenshots/29_flutter_blutter_script_overview_launch.jpg" alt="Flutter blutter launch" width="280"/></td></tr></table>
 
 <p><em>Figure 16 — Flutter navigation route enumeration via Frida overlay, and Blutter snapshot analysis from the target view</em></p>
 </div>
