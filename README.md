@@ -42,58 +42,9 @@ Every workflow starts from an installed package. The app selector lists installe
 <div align="center">
 <img src="screenshots/27_target_app_selection_list.jpg" alt="Target app selection" width="300"/>
 
+
 <p><em>Figure 1 — 211 installed apps, searchable — one tap to start an assessment</em></p>
 </div>
-
----
-
-## Selected Findings
-
-Two critical vulnerabilities discovered during real engagements, driven end-to-end with RedOps Mobile. Both anonymized per NDA; technical chain components are stock public stack names and do not identify the targets.
-
-### One unauthenticated `GET` → 301K-user database → webshell → full host compromise
-
-**Target:** Production enterprise backend · 301K users
-**Severity:** Critical · Full RCE
-
-> 1. Credentials pulled from the APK via RedOps' SharedPreferences module
-> 2. Reused on an unauthenticated Spring Boot Admin console
-> 3. `GET /actuator/heapdump` → 260 MB of cleartext heap
-> 4. MySQL, Redis, and Nacos passwords sitting inside the heap
-> 5. Redis `CONFIG SET dir /www/wwwroot` + `dbfilename shell.php` + `SAVE`
-> 6. PHP webshell written into the BT Panel webroot → full host RCE
-
-Credential extraction, chain reproduction, and the final writeup all driven from the phone. No laptop on engagement.
-
-<div align="center">
-<img src="screenshots/23_agent_chat_rce_chain_writeup.jpg" alt="Agent writeup of the full RCE chain" width="320"/>
-
-<p><em>Figure 2 — Full RCE chain: APK credential leak → Spring Boot Admin → Redis webshell → host compromise</em></p>
-</div>
-
-*Discovered during an authorized pentest engagement · anonymized per NDA*
-
-### Zero-click, persistent account takeover across a 34M-MAU Flutter game
-
-**Target:** Mass-market Android Flutter game · 34M+ MAU
-**Severity:** CVSS 9.8 · Zero-click · Persistent
-
-> 1. Traffic hooked with the RedOps CDP bridge (`pq attach --mitm`)
-> 2. VPS reverse-proxied legitimate game assets while injecting malicious JS inline
-> 3. Plugin-bridge Frida hooks intercepted every auth flow in real time
-> 4. Exfiltrated Facebook OAuth tokens, Google auth codes, session JWTs, device IDs on every launch
-> 5. Stolen Facebook token queried the Graph API directly from the in-app V8 context
-> 6. Chained as the delivery vector for a second, persistent code-injection path
-
-Flutter navigation discovery, V8 hooking, and live traffic interception all orchestrated from the phone. App behavior stayed normal to the victim.
-
-<div align="center">
-<img src="screenshots/28_agent_chat_exploit_chain_detail.jpg" alt="Agent writeup of the zero-click Flutter exploit chain" width="320"/>
-
-<p><em>Figure 3 — Zero-click Flutter exploit: V8 injection, OAuth theft, persistent code injection — CVSS 9.8</em></p>
-</div>
-
-*Discovered during an authorized pentest engagement · anonymized per NDA*
 
 ---
 
@@ -109,7 +60,8 @@ The Overview tab surfaces package metadata, auto-detects the app framework (Flut
 <img src="screenshots/01_target_overview_app_info_framework_detection.jpg" alt="Overview with framework detection" width="280"/>
 <img src="screenshots/04_target_overview_component_stats_data_extraction.jpg" alt="Component stats and data extraction" width="280"/>
 
-<p><em>Figure 4 — Framework auto-detection (Cronet / Chromium QUIC) and component statistics with exported counts</em></p>
+
+<p><em>Figure 2 — Framework auto-detection (Cronet / Chromium QUIC) and component statistics with exported counts</em></p>
 </div>
 
 Decompilation can run locally on-device or be offloaded to a VPS for heavier targets. The tool dropdown picks the right decompiler for the detected framework.
@@ -118,7 +70,8 @@ Decompilation can run locally on-device or be offloaded to a VPS for heavier tar
 <img src="screenshots/02_target_overview_decompiler_selection_dropdown.jpg" alt="Decompiler selection dropdown" width="280"/>
 <img src="screenshots/22_target_overview_vps_decompile_options.jpg" alt="VPS decompile options" width="280"/>
 
-<p><em>Figure 5 — Four decompilers auto-recommended per framework, with VPS offload for heavy targets</em></p>
+
+<p><em>Figure 3 — Four decompilers auto-recommended per framework, with VPS offload for heavy targets</em></p>
 </div>
 
 Native and RCE scans run from the same screen and feed directly into the Findings tab.
@@ -126,7 +79,8 @@ Native and RCE scans run from the same screen and feed directly into the Finding
 <div align="center">
 <img src="screenshots/03_target_overview_rce_scan_results.jpg" alt="RCE scan results" width="300"/>
 
-<p><em>Figure 6 — 253 RCE findings across 9 vulnerability categories from a single scan</em></p>
+
+<p><em>Figure 4 — 253 RCE findings across 9 vulnerability categories from a single scan</em></p>
 </div>
 
 ### Manifest — security flags and permissions
@@ -136,7 +90,8 @@ Parses `AndroidManifest.xml` and flags risky flags, exported components, intent 
 <div align="center">
 <img src="screenshots/05_target_manifest_security_flags_permissions.jpg" alt="Manifest security review" width="300"/>
 
-<p><em>Figure 7 — Manifest security flags and 40 permissions with dangerous-permission severity stripes</em></p>
+
+<p><em>Figure 5 — Manifest security flags and 40 permissions with dangerous-permission severity stripes</em></p>
 </div>
 
 ### Components — exported surface
@@ -147,7 +102,8 @@ Enumerates exported activities, services, receivers, and providers. Each row is 
 <img src="screenshots/06_target_components_exported_activities.jpg" alt="Exported components" width="280"/>
 <img src="screenshots/30_target_component_test_dialog.jpg" alt="Component test dialog" width="280"/>
 
-<p><em>Figure 8 — 225 components enumerated — tap any row to open a prebuilt intent builder with fuzz launcher</em></p>
+
+<p><em>Figure 6 — 225 components enumerated — tap any row to open a prebuilt intent builder with fuzz launcher</em></p>
 </div>
 
 ### Findings — consolidated, filterable, agent-ready
@@ -158,7 +114,8 @@ All scan results land here with severity filtering. Findings can be exported int
 <img src="screenshots/07_target_findings_summary_severity_filters.jpg" alt="Findings summary" width="280"/>
 <img src="screenshots/31_target_finding_task_hijacking_dialog.jpg" alt="Task hijacking test dialog" width="280"/>
 
-<p><em>Figure 9 — Severity-filtered findings with template-based agent export and one-click POC APK generation</em></p>
+
+<p><em>Figure 7 — Severity-filtered findings with template-based agent export and one-click POC APK generation</em></p>
 </div>
 
 ---
@@ -170,7 +127,8 @@ The `Tools` tab groups everything operational: traffic capture, HTTP repeater, I
 <div align="center">
 <img src="screenshots/09_tools_menu_overview.jpg" alt="Tools menu" width="300"/>
 
-<p><em>Figure 10 — Five integrated pentest tools accessible from the bottom nav bar</em></p>
+
+<p><em>Figure 8 — Five integrated pentest tools accessible from the bottom nav bar</em></p>
 </div>
 
 ### Traffic Capture
@@ -182,14 +140,16 @@ HTTP/HTTPS capture is driven by a Frida-based MITM (attach or spawn) and stores 
 <img src="screenshots/20_traffic_capture_confirm_start_dialog.jpg" alt="Capture start confirmation" width="240"/>
 <img src="screenshots/11_traffic_capture_request_list.jpg" alt="Request list" width="240"/>
 
-<p><em>Figure 11 — Traffic capture flow: target selection → attach-mode confirmation → live request stream</em></p>
+
+<p><em>Figure 9 — Traffic capture flow: target selection → attach-mode confirmation → live request stream</em></p>
 </div>
 
 <div align="center">
 <img src="screenshots/12_traffic_capture_request_detail_body_json.jpg" alt="Request detail — JSON body" width="280"/>
 <img src="screenshots/19_traffic_capture_entry_detail_params_headers.jpg" alt="Entry detail — params and headers" width="280"/>
 
-<p><em>Figure 12 — Request inspection — JSON body with session telemetry (left) and full headers with query params (right)</em></p>
+
+<p><em>Figure 10 — Request inspection — JSON body with session telemetry (left) and full headers with query params (right)</em></p>
 </div>
 
 ### HTTP Repeater
@@ -200,7 +160,8 @@ A Burp-style request repeater with persistent request/response pairs. Edit heade
 <img src="screenshots/13_http_repeater_edit_request_body.jpg" alt="Repeater — edit request body" width="280"/>
 <img src="screenshots/14_http_repeater_response_json_body.jpg" alt="Repeater — JSON response" width="280"/>
 
-<p><em>Figure 13 — Burp-style HTTP repeater with editable body, headers, and response history</em></p>
+
+<p><em>Figure 11 — Burp-style HTTP repeater with editable body, headers, and response history</em></p>
 </div>
 
 ### PQ Manager — Frida server and hooks
@@ -211,7 +172,8 @@ The `pq` tool is the primary interface for all Frida operations. PQ Manager is i
 <img src="screenshots/15_pq_manager_frida_server_favorites.jpg" alt="PQ Manager — server and favorites" width="280"/>
 <img src="screenshots/16_pq_manager_add_favorites_frida_hooks.jpg" alt="Add favorite hooks" width="280"/>
 
-<p><em>Figure 14 — PQ Manager: Frida server lifecycle with stealth naming, and per-target hook discovery</em></p>
+
+<p><em>Figure 12 — PQ Manager: Frida server lifecycle with stealth naming, and per-target hook discovery</em></p>
 </div>
 
 Favorites expand to a detail view with the script source and parameters. Running a hook against a live app shows up as an in-game overlay, HUD, or whatever the script chooses to draw.
@@ -220,7 +182,8 @@ Favorites expand to a detail view with the script source and parameters. Running
 <img src="screenshots/25_pq_manager_favorite_expanded_detail.jpg" alt="Favorite expanded detail" width="280"/>
 <img src="screenshots/26_frida_hook_ingame_cheat_menu_overlay.jpg" alt="Frida hook overlay" width="280"/>
 
-<p><em>Figure 15 — Favorite hook expanded with usage metadata, and a live in-game cheat overlay on a Unity target</em></p>
+
+<p><em>Figure 13 — Favorite hook expanded with usage metadata, and a live in-game cheat overlay on a Unity target</em></p>
 </div>
 
 ### Data — SharedPreferences browser and editor
@@ -231,19 +194,21 @@ Enumerates every app that has SharedPreferences on the device, then opens into a
 <img src="screenshots/17_shared_prefs_package_list.jpg" alt="SharedPrefs package list" width="280"/>
 <img src="screenshots/21_shared_prefs_editor_entries_security_banner.jpg" alt="SharedPrefs entry editor" width="280"/>
 
-<p><em>Figure 16 — SharedPreferences scanner across 333 packages, with per-entry editor and sensitive-key banner</em></p>
+
+<p><em>Figure 14 — SharedPreferences scanner across 333 packages, with per-entry editor and sensitive-key banner</em></p>
 </div>
 
 ---
 
 ## Agent
 
-The `Agent` tab is a chat/session workflow backed by the Claude CLI running inside the chroot, pre-loaded with the bundled `/root/pentest/CLAUDE.md` context, skills, and docs. Sessions can start fresh or open pre-loaded with target findings, traffic exports, or a full web setup. Both engagements in [Selected Findings](#selected-findings) above came out of sessions just like this one — the agent chained the vulnerabilities and wrote the exploit paths while I drove the investigation.
+The `Agent` tab is a chat/session workflow backed by the Claude CLI running inside the chroot, pre-loaded with the bundled `/root/pentest/CLAUDE.md` context, skills, and docs. Sessions can start fresh or open pre-loaded with target findings, traffic exports, or a full web setup. Both engagements in [Selected Findings](#selected-findings) below came out of sessions just like this one — the agent chained the vulnerabilities and wrote the exploit paths while I drove the investigation.
 
 <div align="center">
 <img src="screenshots/08_agent_chat_new_session.jpg" alt="Agent — new session" width="300"/>
 
-<p><em>Figure 17 — Claude agent session pre-loaded with target analysis for autonomous vulnerability chaining</em></p>
+
+<p><em>Figure 15 — Claude agent session pre-loaded with target analysis for autonomous vulnerability chaining</em></p>
 </div>
 
 ---
@@ -258,7 +223,8 @@ Dart-compiled apps get dedicated tooling: live navigation route enumeration via 
 <img src="screenshots/24_flutter_nav_routes_overlay.jpg" alt="Flutter navigation overlay" width="280"/>
 <img src="screenshots/29_flutter_blutter_script_overview_launch.jpg" alt="Flutter blutter launch" width="280"/>
 
-<p><em>Figure 18 — Flutter navigation route enumeration via Frida overlay, and Blutter snapshot analysis from the target view</em></p>
+
+<p><em>Figure 16 — Flutter navigation route enumeration via Frida overlay, and Blutter snapshot analysis from the target view</em></p>
 </div>
 
 ---
@@ -409,6 +375,58 @@ Agent-facing files live in two places during development:
 Helpers: `sync_to_source.sh`, `compare_deployed_vs_source.sh`, `deploy_from_source.sh`.
 
 ---
+
+---
+
+## Selected Findings
+
+Two critical vulnerabilities discovered during real engagements, driven end-to-end with RedOps Mobile. Both anonymized per NDA; technical chain components are stock public stack names and do not identify the targets.
+
+### One unauthenticated `GET` → 301K-user database → webshell → full host compromise
+
+**Target:** Production enterprise backend · 301K users
+**Severity:** Critical · Full RCE
+
+> 1. Credentials pulled from the APK via RedOps' SharedPreferences module
+> 2. Reused on an unauthenticated Spring Boot Admin console
+> 3. `GET /actuator/heapdump` → 260 MB of cleartext heap
+> 4. MySQL, Redis, and Nacos passwords sitting inside the heap
+> 5. Redis `CONFIG SET dir /www/wwwroot` + `dbfilename shell.php` + `SAVE`
+> 6. PHP webshell written into the BT Panel webroot → full host RCE
+
+Credential extraction, chain reproduction, and the final writeup all driven from the phone. No laptop on engagement.
+
+<div align="center">
+<img src="screenshots/23_agent_chat_rce_chain_writeup.jpg" alt="Agent writeup of the full RCE chain" width="320"/>
+
+
+<p><em>Figure 17 — Full RCE chain: APK credential leak → Spring Boot Admin → Redis webshell → host compromise</em></p>
+</div>
+
+*Discovered during an authorized pentest engagement · anonymized per NDA*
+
+### Zero-click, persistent account takeover across a 34M-MAU Flutter game
+
+**Target:** Mass-market Android Flutter game · 34M+ MAU
+**Severity:** CVSS 9.8 · Zero-click · Persistent
+
+> 1. Traffic hooked with the RedOps CDP bridge (`pq attach --mitm`)
+> 2. VPS reverse-proxied legitimate game assets while injecting malicious JS inline
+> 3. Plugin-bridge Frida hooks intercepted every auth flow in real time
+> 4. Exfiltrated Facebook OAuth tokens, Google auth codes, session JWTs, device IDs on every launch
+> 5. Stolen Facebook token queried the Graph API directly from the in-app V8 context
+> 6. Chained as the delivery vector for a second, persistent code-injection path
+
+Flutter navigation discovery, V8 hooking, and live traffic interception all orchestrated from the phone. App behavior stayed normal to the victim.
+
+<div align="center">
+<img src="screenshots/28_agent_chat_exploit_chain_detail.jpg" alt="Agent writeup of the zero-click Flutter exploit chain" width="320"/>
+
+
+<p><em>Figure 18 — Zero-click Flutter exploit: V8 injection, OAuth theft, persistent code injection — CVSS 9.8</em></p>
+</div>
+
+*Discovered during an authorized pentest engagement · anonymized per NDA*
 
 ## Safety and Scope
 
